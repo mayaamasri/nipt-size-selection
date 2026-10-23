@@ -1,0 +1,26 @@
+name: nipt
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  # --- alignment & sequence tools ---
+  - bowtie2>=2.5.4
+  - samtools>=1.20
+  # --- core scientific Python ---
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - pyarrow          # fast Parquet storage for fragment tables
+  # --- genomics I/O ---
+  - pysam            # read BAM files, get fragment length (template length)
+  - pyfaidx          # random access into the reference FASTA
+  # --- plotting ---
+  - matplotlib
+  - seaborn
+  # --- utilities ---
+  - pyyaml
+  - tqdm
+  - jupyterlab
+  - ipykernel

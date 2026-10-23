@@ -1,0 +1,44 @@
+# ---- Large genomic data: never commit (GitHub rejects files >100 MB) ----
+data/raw/*
+data/reference/*
+data/processed/*
+!data/**/.gitkeep
+*.fa
+*.fa.gz
+*.fna
+*.fna.gz
+*.fai
+*.bt2
+*.bt2l
+*.zip
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.sam
+*.bam
+*.bai
+*.parquet
+*.npz
+
+# ---- Results: commit final figures/tables only (small); ignore scratch ----
+results/scratch/
+
+# ---- Python / Jupyter ----
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ---- Manuscript build artifacts (if using LaTeX locally) ----
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.bbl
+*.blg
