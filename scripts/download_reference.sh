@@ -24,7 +24,7 @@ samtools faidx hg38.analysisSet.fa
 if [ ! -d GRCh38_noalt_as ]; then
   echo ">> Downloading Bowtie2 index (~3.5 GB)..."
   curl -L -C - -O https://genome-idx.s3.amazonaws.com/bt/GRCh38_noalt_as.zip
-  unzip GRCh38_noalt_as.zip
+  unzip GRCh38_noalt_as.zip -d GRCh38_noalt_as
   rm GRCh38_noalt_as.zip
 fi
 
