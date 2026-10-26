@@ -3,6 +3,7 @@ data/raw/*
 data/reference/*
 data/processed/*
 !data/**/.gitkeep
+!data/raw/rabinowitz_G1_length_counts.csv
 *.fa
 *.fa.gz
 *.fna
