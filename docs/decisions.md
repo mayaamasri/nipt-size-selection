@@ -10,7 +10,6 @@ if a reviewer asks "why did you do X?".
 |------|-------|
 | Decisions, literature, theory (break-even), daily task briefs | Maya |
 | All code: simulation, mapping, methods A/B/C1/C2, evaluation, figures | Hala |
-| Writing (all manuscript sections) | Maya |
 
 ## Decisions
 
