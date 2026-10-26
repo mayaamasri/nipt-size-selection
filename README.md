@@ -33,7 +33,7 @@ manuscript/            manuscript source
 
 ### 2. Clone and create the environment
 ```bash
-git clone https://github.com/<owner>/nipt-size-selection.git
+git clone https://github.com/mayaamasri/nipt-size-selection.git
 cd nipt-size-selection
 conda env create -f environment.yml
 conda activate nipt
