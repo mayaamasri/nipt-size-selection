@@ -1,0 +1,7 @@
+ff,depth,noise,method,max_depth,cv_auc,chosen
+0.04,5000000,none,C1,3,0.998107,True
+0.04,5000000,none,C1,4,0.996330125,False
+0.04,5000000,none,C1,5,0.994874,False
+0.04,5000000,none,C2,3,0.99884975,True
+0.04,5000000,none,C2,4,0.99884975,False
+0.04,5000000,none,C2,5,0.998799875,False
