@@ -20,6 +20,7 @@ Run from the repo root to print the 2E QC numbers and save results/tables/patien
     python -m src.simulate.patients
 """
 
+import math
 import time
 from functools import lru_cache
 
@@ -74,7 +75,10 @@ def mixture(ff, trisomy, matrices):
 
 
 def generate_patients(ff, depth, n_patients, trisomy, sigma=0.0, *, rng, matrices=None):
-    """Counts of surviving fragments, array (n_patients, 2, 465): [:, 0] chr21, [:, 1] other autosomes."""
+    """Counts of surviving fragments, array (n_patients, 2, 465): [:, 0] chr21, [:, 1] other autosomes.
+
+    matrices: from origin_matrices(config). If None, matrices built from config/config.yaml are used.
+    """
     if sigma != 0:
         raise NotImplementedError("noise (sigma > 0) comes in Task 02b, decision #7")
     p = mixture(ff, trisomy, _cached_matrices() if matrices is None else matrices)
@@ -98,8 +102,15 @@ def window_stats(matrices, ff, lo, hi):
 
 
 def _grid_index(values, value, name):
-    hits = [i for i, v in enumerate(values) if np.isclose(v, value)] if not isinstance(value, str) \
-        else [i for i, v in enumerate(values) if v == value]
+    """Position of value in a config grid list: exact for strings and integers, 1e-9 relative for floats
+    (so 0.1 and 0.10 match, but 0.100001 or depth 1,000,001 raise)."""
+    def same(v):
+        if isinstance(v, str) or isinstance(value, str):
+            return v == value
+        if isinstance(v, float) or isinstance(value, float):
+            return math.isclose(v, value, rel_tol=1e-9, abs_tol=0.0)
+        return v == value
+    hits = [i for i, v in enumerate(values) if same(v)]
     if len(hits) != 1:
         raise ValueError(f"{name} {value!r} is not in the config grid {values}")
     return hits[0]
@@ -120,12 +131,16 @@ def patient_seed(config, ff, depth, noise, group):
 
 
 def generate_group(config, ff, depth, noise, group, matrices=None):
-    """All patients of one group of one grid condition (size from patients_per_condition)."""
+    """All patients of one group of one grid condition (size from patients_per_condition).
+
+    matrices: from origin_matrices(config); built from the given config if None (pass them in when
+    generating many groups, to build them once).
+    """
     if noise not in NO_NOISE:
         raise NotImplementedError("noise levels other than none come in Task 02b")
     rng = np.random.default_rng(patient_seed(config, ff, depth, noise, group))
     return generate_patients(ff, depth, config["patients_per_condition"][group], group.endswith("t21"),
-                             rng=rng, matrices=matrices)
+                             rng=rng, matrices=origin_matrices(config) if matrices is None else matrices)
 
 
 def qc_rng(config, run):

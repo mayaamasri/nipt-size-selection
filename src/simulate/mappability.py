@@ -24,6 +24,7 @@ from scipy import stats
 
 from src.config import load_config, repo_path
 from src.simulate.lengths import ORIGINS
+from src.simulate.pool import n_chunks
 
 Z95 = 1.959963984540054
 
@@ -53,8 +54,10 @@ def bin_index(lengths, config):
 
 def load_pool(config):
     files = sorted(glob.glob(str(repo_path(config["paths"]["pool_dir"]) / "chunk_*.parquet")))
-    if not files:
-        raise FileNotFoundError("no pool chunks found; run python -m src.simulate.pool first")
+    expected = n_chunks(config)
+    if len(files) != expected:
+        raise FileNotFoundError(f"found {len(files)} pool chunks, expected {expected}; "
+                                f"run python -m src.simulate.pool to finish the pool")
     pool = pd.concat([pd.read_parquet(f, columns=["origin", "true_length", "status", "mapped_chrom"])
                       for f in files], ignore_index=True)
     return pool, len(files)
