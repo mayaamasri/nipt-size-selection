@@ -28,7 +28,9 @@ simulation:
 grid:
   fetal_fraction: [0.01, 0.02, 0.03, 0.04, 0.06, 0.08, 0.10, 0.15]
   depth: [1000000, 2500000, 5000000, 10000000]
-  noise_sigma: [none, low, realistic]   # TODO: numeric values
+  # TODO: numeric values. The no-noise level must stay FIRST (index 0): patient seeds use the
+  # index (spawn_key (1, i_ff, i_depth, i_noise, i_group)), and patients.py checks it.
+  noise_sigma: [none, low, realistic]
   trisomy_fetal_chr21_multiplier: 1.5
 
 patients_per_condition:            # decision #4
@@ -40,5 +42,5 @@ patients_per_condition:            # decision #4
 
 methods:
   z_threshold: 3.0
-  size_selection_cutoff_bp: TODO
+  size_selection_window_bp: [40, 156]   # decision #6: Method B keeps fragments 40-156 bp
   tree_max_depth: [3, 4, 5]

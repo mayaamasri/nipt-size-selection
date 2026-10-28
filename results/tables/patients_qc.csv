@@ -1,0 +1,16 @@
+quantity,value,reference,note
+q_chr21,0.012568881,,
+pool_survival,0.86205665,,
+normal_mean_chr21_fraction,0.012569455,0.012568881,z = +0.24 using SE 2.443e-06
+normal_sd_chr21_fraction,0.00010927254,0.00011140424,"ratio 0.9809, sampling SE ~0.0158"
+batches_identical_to_one_call,1,,
+t21_mean_increase_chr21_fraction,0.000616535,0.0006166698,SE 3.53e-06; p*FF/2 = 6.2844e-04
+ff0.04_window_gain,2.4255844,,expected roughly 2.2-2.5x
+ff0.04_window_ff,0.097023374,,
+ff0.04_window_kept_r,0.20317681,,expected roughly 0.20
+ff0.04_sampled_kept,0.20317482,0.20317681,z = -0.22
+ff0.10_window_gain,2.2271477,,expected roughly 2.2-2.5x
+ff0.10_window_ff,0.22271477,,
+ff0.10_window_kept_r,0.22127966,,expected roughly 0.20
+ff0.10_sampled_kept,0.22128879,0.22127966,z = +0.99
+seconds_2000_patients_depth10M,0.072024458,,
