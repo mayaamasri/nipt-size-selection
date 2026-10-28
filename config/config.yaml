@@ -39,6 +39,7 @@ patients_per_condition:            # decision #4
   train_t21: 2000
   test_normal: 10000
   test_t21: 2000
+  calibration: 10000               # normals only; sets the tree threshold (Task 03)
 
 methods:
   z_threshold: 3.0

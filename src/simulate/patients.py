@@ -31,7 +31,8 @@ from src.config import load_config, repo_path
 from src.simulate.lengths import load_length_distributions
 from src.simulate.mappability import load_mappability
 
-GROUPS = ("reference", "train_normal", "train_t21", "test_normal", "test_t21")
+# Seeds use the position in GROUPS: append new groups at the end, never reorder.
+GROUPS = ("reference", "train_normal", "train_t21", "test_normal", "test_t21", "calibration")
 CHR21, OTHER = 0, 1
 NO_NOISE = ("none", 0)  # accepted values for the first noise level (index 0)
 # 2E QC runs: spawn_key (2, k). Separate from grid patients even where the setting is a grid condition.
