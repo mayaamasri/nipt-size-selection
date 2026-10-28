@@ -68,12 +68,17 @@ def draw_fragment(fasta, chromosomes, chrom_lengths, chrom_probs, length, rng, r
         rejected_letters.update(bad)
 
 
-def simulate(config, n_by_origin, out_prefix):
-    """Simulate fragments, write <out_prefix>_R1.fastq / _R2.fastq / _summary.json; return the summary."""
+def simulate(config, n_by_origin, out_prefix, seed=None):
+    """Simulate fragments, write <out_prefix>_R1.fastq / _R2.fastq / _summary.json; return the summary.
+
+    seed: a np.random.SeedSequence (e.g. one child per pool chunk). None = SeedSequence(config["seed"]),
+    which gives the same stream as default_rng(config["seed"]) (Task 01 runs).
+    """
     sim = config["simulation"]
     read_length = sim["read_length"]
     chromosomes = sim["chromosomes"]
-    rng = np.random.default_rng(config["seed"])
+    seed_seq = np.random.SeedSequence(config["seed"]) if seed is None else seed
+    rng = np.random.default_rng(seed_seq)
 
     fasta = open_reference(config)
     chrom_lengths, chrom_probs = chromosome_weights(fasta, chromosomes)
@@ -104,7 +109,8 @@ def simulate(config, n_by_origin, out_prefix):
                 r2_out.write(f"@{name}\n{r2}\n+\n{quality}\n")
 
     summary = {
-        "seed": config["seed"],
+        "seed": seed_seq.entropy,
+        "seed_spawn_key": list(seed_seq.spawn_key),  # [] for the config seed itself
         "read_length": read_length,
         "n_fragments": n_by_origin,
         "rejections": rejections,

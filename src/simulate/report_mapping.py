@@ -58,14 +58,23 @@ def survival_tests(table):
 
 
 def bowtie2_timing(log_path):
-    """Wall time (s) and peak memory (bytes) from /usr/bin/time -l, plus Bowtie2's overall rate line."""
+    """Wall time (s) and peak memory (bytes) from /usr/bin/time, plus Bowtie2's overall rate line.
+
+    Reads macOS `time -l` ("12.34 real", RSS in bytes) or GNU `time -v` ("Elapsed (wall clock) time
+    (h:mm:ss or m:ss): 1:02.34", RSS in kbytes). Missing values (no /usr/bin/time) come back as None.
+    """
     text = open(log_path).read()
-    wall = re.search(r"([\d.]+) real", text)
-    rss = re.search(r"(\d+)\s+maximum resident set size", text)
+    wall, rss = None, None
+    if m := re.search(r"([\d.]+) real", text):
+        wall = float(m.group(1))
+    elif m := re.search(r"Elapsed \(wall clock\) time.*?: ([\d:.]+)", text):
+        wall = sum(float(part) * 60 ** i for i, part in enumerate(reversed(m.group(1).split(":"))))
+    if m := re.search(r"(\d+)\s+maximum resident set size", text):
+        rss = int(m.group(1))
+    elif m := re.search(r"Maximum resident set size \(kbytes\): (\d+)", text):
+        rss = 1024 * int(m.group(1))
     rate = re.search(r"([\d.]+%) overall alignment rate", text)
-    return (float(wall.group(1)) if wall else None,
-            int(rss.group(1)) if rss else None,
-            rate.group(1) if rate else None)
+    return wall, rss, rate.group(1) if rate else None
 
 
 def main():
@@ -119,8 +128,9 @@ def main():
 
     wall, rss, rate = bowtie2_timing(f"{prefix}.bowtie2.log")
     print("\n== Bowtie2 ==")
-    print(f"pairs: {len(table):,} | wall time {wall} s | peak memory "
-          f"{rss / 1e9:.2f} GB ({rss:,} bytes) | Bowtie2 overall alignment rate {rate}")
+    memory = f"{rss / 1e9:.2f} GB ({rss:,} bytes)" if rss is not None else "not recorded"
+    print(f"pairs: {len(table):,} | wall time {wall} s | peak memory {memory} "
+          f"| Bowtie2 overall alignment rate {rate}")
 
 
 if __name__ == "__main__":
