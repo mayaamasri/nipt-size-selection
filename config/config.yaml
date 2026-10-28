@@ -8,6 +8,7 @@ paths:
   reference_fasta: data/reference/hg38.analysisSet.fa
   bowtie2_index: data/reference/GRCh38_noalt_as/GRCh38_noalt_as
   pool_dir: data/processed/pool   # one Parquet table per mapped chunk (Task 2B)
+  mappability: data/processed/mappability.npz   # S(l) and q(c) (Task 2C)
   results: results
 
 simulation:
