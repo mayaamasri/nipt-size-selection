@@ -7,7 +7,7 @@ seed: 2026
 paths:
   reference_fasta: data/reference/hg38.analysisSet.fa
   bowtie2_index: data/reference/GRCh38_noalt_as/GRCh38_noalt_as
-  fragment_pools: data/processed/pools
+  pool_dir: data/processed/pool   # one Parquet table per mapped chunk (Task 2B)
   results: results
 
 simulation:
@@ -18,10 +18,11 @@ simulation:
   length_artifact_bp: 101    # decision #1: read-length artifact bin, replaced by mean of neighbours
   chromosomes: [chr1, chr2, chr3, chr4, chr5, chr6, chr7, chr8, chr9, chr10,
                 chr11, chr12, chr13, chr14, chr15, chr16, chr17, chr18, chr19,
-                chr20, chr21, chr22]   # autosomes only (TODO: confirm)
+                chr20, chr21, chr22]   # decision #11: autosomes only
   min_mapq: 40
-  pool_size_per_origin: TODO  # number of maternal / fetal fragments to map
-  pool_split: [reference, train, test]
+  pool_size_per_origin: 10000000   # decision #3
+  pool_chunk_size: 1000000
+  survival_bin_bp: 10
 
 grid:
   fetal_fraction: [0.01, 0.02, 0.03, 0.04, 0.06, 0.08, 0.10, 0.15]
@@ -29,11 +30,12 @@ grid:
   noise_sigma: [none, low, realistic]   # TODO: numeric values
   trisomy_fetal_chr21_multiplier: 1.5
 
-patients_per_condition:
-  reference: TODO
-  train: TODO
-  test_normal: TODO
-  test_t21: TODO
+patients_per_condition:            # decision #4
+  reference: 2000                  # normals only
+  train_normal: 10000
+  train_t21: 2000
+  test_normal: 10000
+  test_t21: 2000
 
 methods:
   z_threshold: 3.0

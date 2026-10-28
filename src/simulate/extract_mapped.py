@@ -106,13 +106,8 @@ def mapped_pairs(bam_path):
     return rows
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--out-prefix", required=True)
-    args = parser.parse_args()
-    prefix = args.out_prefix
-
-    config = load_config()
+def build_table(prefix, config):
+    """Per-fragment table (truth, status, mapped coordinates) for one mapped prefix; exits on a mismatch."""
     min_mapq = config["simulation"]["min_mapq"]
 
     with pysam.AlignmentFile(f"{prefix}.mapped.bam", "rb") as bam:
@@ -134,10 +129,19 @@ def main():
 
     for col in ("mapped_start", "mapped_length", "mapq_r1", "mapq_r2"):
         table[col] = table[col].astype("Int64")  # integers that allow empty values
-    table = table.drop(columns="name")
+    return table.drop(columns="name")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--out-prefix", required=True)
+    args = parser.parse_args()
+    prefix = args.out_prefix
+
+    table = build_table(prefix, load_config())
     out = f"{prefix}_fragments.tsv"
     table.to_csv(out, sep="\t", index=False)
-    print(f"Wrote {out}: {len(table):,} fragments, {from_bam.sum():,} survived "
+    print(f"Wrote {out}: {len(table):,} fragments, {(table['status'] == 'survived').sum():,} survived "
           f"(BAM and SAM agree on which ones)")
 
 
