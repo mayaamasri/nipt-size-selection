@@ -35,7 +35,8 @@ from src.simulate.patients import GROUPS, generate_group, origin_matrices
 CONDITION = ["ff", "depth", "noise"]
 METHODS = ["A", "B", "B-opt", "C1", "C2"]
 RESULT_COLUMNS = CONDITION + ["method", "sens", "sens_lo", "sens_hi", "fpr", "fpr_lo", "fpr_hi", "auc",
-                              "sens_at_fpr", "g", "r", "cutoff", "threshold", "max_depth", "calib_fpr"]
+                              "sens_at_fpr", "g", "r", "cutoff", "threshold", "max_depth", "calib_fpr",
+                              "nobody_positive"]
 # Per table: columns to sort by after the condition, and fixed orders for text columns
 SORT = {
     "results_all.csv": (["method"], {"method": METHODS}),
@@ -87,9 +88,11 @@ def run_condition(config, ff, depth, noise):
         rows.append({**cond, "method": method, **evaluate(y, res["scores"], res["calls"], target),
                      "g": g if method == "B" else np.nan, "r": r if method == "B" else np.nan,
                      "cutoff": res.get("cutoff"), "threshold": res.get("threshold"),
-                     "max_depth": res.get("max_depth"), "calib_fpr": res.get("calib_fpr")})
+                     "max_depth": res.get("max_depth"), "calib_fpr": res.get("calib_fpr"),
+                     "nobody_positive": res.get("nobody_positive")})
     results = pd.DataFrame(rows, columns=RESULT_COLUMNS)
     results[["cutoff", "max_depth"]] = results[["cutoff", "max_depth"]].astype("Int64")
+    results["nobody_positive"] = results["nobody_positive"].astype("boolean")
 
     u = z_methods["B-opt"]["cutoff"]
     tables = {
@@ -187,6 +190,9 @@ def main():
     print("\nSanity checks")
     sanity_checks(results, test_normal_za, config["patients_per_condition"]["reference"],
                   config["methods"]["target_fpr"])
+    nobody = results.loc[results["nobody_positive"].fillna(False).astype(bool), "method"].tolist()
+    if nobody:
+        print(f"Note: nobody positive for {', '.join(nobody)} (no leaf meets the target FPR on calibration)")
 
 
 if __name__ == "__main__":

@@ -91,7 +91,8 @@ def fit_tree_method(method, train_normal_z, train_t21_z, calib_z, test_z, config
     """Fit C1 or C2, set its threshold on the calibration normals and score the test patients.
 
     Returns dict: scores (test probabilities), calls (scores >= threshold), threshold, calib_fpr,
-    max_depth, cv_auc {depth: mean AUC}, importances {feature: importance}.
+    nobody_positive (no leaf meets the target, so nobody is called positive), max_depth,
+    cv_auc {depth: mean AUC}, importances {feature: importance}.
     """
     X = np.vstack([feature_matrix(train_normal_z, method), feature_matrix(train_t21_z, method)])
     y = np.concatenate([np.zeros(len(train_normal_z["frac_all"]), int), np.ones(len(train_t21_z["frac_all"]), int)])
@@ -106,10 +107,12 @@ def fit_tree_method(method, train_normal_z, train_t21_z, calib_z, test_z, config
     calib_scores = tree.predict_proba(feature_matrix(calib_z, method))[:, 1]
     threshold, calib_fpr = threshold_at_fpr(calib_scores, candidates, target)
     check_threshold(calib_scores, candidates, threshold, calib_fpr, target)
+    # True when no leaf meets the target on calibration, so t is the extra candidate above every leaf
+    nobody_positive = bool(threshold > candidates[:-1].max())
 
     scores = tree.predict_proba(feature_matrix(test_z, method))[:, 1]
     return {"scores": scores, "calls": scores >= threshold, "threshold": threshold, "calib_fpr": calib_fpr,
-            "max_depth": depth, "cv_auc": cv_auc,
+            "nobody_positive": nobody_positive, "max_depth": depth, "cv_auc": cv_auc,
             "importances": dict(zip(TREE_FEATURES[method], tree.feature_importances_.tolist()))}
 
 
@@ -133,7 +136,8 @@ def main():
         print(f"\n{method} ({', '.join(TREE_FEATURES[method])})")
         print("  CV AUC: " + ", ".join(f"depth {d} {a:.4f}" for d, a in r["cv_auc"].items())
               + f" -> max_depth {r['max_depth']}")
-        print(f"  threshold {r['threshold']:.6f}, calibration FPR {100 * r['calib_fpr']:.3f}%")
+        print(f"  threshold {r['threshold']:.6f}, calibration FPR {100 * r['calib_fpr']:.3f}%"
+              f"{' (nobody positive)' if r['nobody_positive'] else ''}")
         print(f"  test: FPR {100 * calls[:n_test_normal].mean():.3f}% | sensitivity {100 * calls[n_test_normal:].mean():.2f}% "
               f"| unique test probabilities {len(np.unique(r['scores']))}")
         print("  importances: " + ", ".join(f"{f} {v:.3f}" for f, v in r["importances"].items()))
