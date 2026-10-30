@@ -106,6 +106,7 @@ patients_per_condition:            # decision #4
   reference: 2000                  # normals only
   train_normal: 10000
   train_t21: 2000
+  calibration_normal: 10000        # tree thresholds, decision #5
   test_normal: 10000
   test_t21: 2000
 ```

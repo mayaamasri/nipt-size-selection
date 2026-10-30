@@ -30,7 +30,7 @@ For each condition (FF × depth × noise), use the **2,000 reference normals** o
 |---|---|---|
 | `zA` | C1, C2 | method A's z-score |
 | `z_short` | C2 | Yu et al. [8]: `S = (short fraction on chr21) − (short fraction on other autosomes)`, short = ≤ 150 bp; z-scored against the reference normals |
-| `z_weighted` | C2 | Rabinowitz et al. [3]: weighted chr21 fraction `Σ w(l)·X[0,l] / Σ w(l)·(X[0,l]+X[1,l])` with `w(l) = p_fetal(l) / (p_fetal(l) + p_maternal(l))` from `load_length_distributions` (Task 01); z-scored against the reference normals |
+| `z_weighted` | C2 | Rabinowitz et al. [3]: weighted chr21 fraction `Σ w(l)·X[0,l] / Σ w(l)·(X[0,l]+X[1,l])` with `w(l) = FF·p_f(l) / (FF·p_f(l) + (1−FF)·p_m(l))`, i.e. P(fetal \| length) as in Rabinowitz, using the condition's FF and the length distributions **after mappability** (decision #9); z-scored against the reference normals |
 
 C1 uses `zA` only (within one condition the raw chr21 fraction is a linear rescaling of `zA`, so adding it gives no new information).
 
@@ -38,8 +38,12 @@ C1 uses `zA` only (within one condition the raw chr21 fraction is a linear resca
 - One tree per condition, `sklearn.tree.DecisionTreeClassifier`, trained on that condition's training set
   (**10,000 normal + 2,000 T21**), `class_weight="balanced"`, seed from config.
 - `max_depth` chosen from {3, 4, 5} by 5-fold cross-validation on the training set (AUC).
-- **Threshold:** on the training normals, choose the smallest probability threshold whose false positive
-  rate is **≤ 0.13%** (the expected FPR of `z > 3`, decision #5). Record the threshold and the achieved training FPR.
+- **Threshold (decision #5):** fit the tree on the whole training set, then compute its predicted probabilities
+  for a separate **calibration set of 10,000 normals** (generated like the reference set, never used for training).
+  Candidate thresholds = the tree's own distinct leaf probabilities; call positive if `prob ≥ threshold`, and pick the
+  smallest candidate whose calibration FPR is **≤ 0.13%**. Record the threshold and the achieved calibration FPR.
+  A shallow tree has few distinct outputs, so the achieved FPR may be below 0.13%: keep it and report it
+  (the `sens_at_fpr` column below keeps the comparison fair).
 - Save C2 feature importances per condition.
 
 ## 3E. Evaluation on the test set (`src/evaluate/metrics.py`)
@@ -48,14 +52,26 @@ Test set per condition: **10,000 normal + 2,000 T21**. For each method (A, B, B-
 - AUC (scores: `zA`, `zB`, `zB-opt`, tree probabilities)
 
 Also per condition, for method B (inputs to Maya's break-even formula):
-- `g` = FF within 40–156 bp ÷ overall FF (computed from the fetal/maternal probabilities, no sampling needed)
-- `r` = fraction of fragments in 40–156 bp
+- `g` = FF within 40–156 bp ÷ overall FF, and `r` = fraction of fragments in 40–156 bp, both computed exactly from
+  the fetal/maternal probability matrices **after mappability** (normal fetal matrix, decision #12), no sampling needed
 
 Write everything to one tidy table `results/tables/results_all.csv`, one row per condition × method:
-`ff, depth, noise, method, sens, sens_lo, sens_hi, fpr, fpr_lo, fpr_hi, auc, g, r, cutoff, threshold`.
+`ff, depth, noise, method, sens, sens_lo, sens_hi, fpr, fpr_lo, fpr_hi, auc, sens_at_fpr, g, r, cutoff, threshold`.
 
-**Detection limit:** separate small script: for each method × depth × noise, the lowest FF where sensitivity ≥ 95%
-→ `results/tables/detection_limits.csv`.
+`sens_at_fpr` = sensitivity at **FPR = 0.13% read from the test ROC curve**, linearly interpolated between the two
+nearest achievable points (decision #5). This compares all methods at exactly the same FPR, so a tree is not
+penalised just because its operating point is stricter than `z > 3`.
+
+**Detection limit (decision #13):** separate small script, for each method × depth × noise, using the FF grid
+1, 2, 3, 4, 6, 8, 10, 15%:
+- **main:** based on `sens` (each method's real cutoff: z > 3 for A/B, the calibration threshold for the trees):
+  the FF where sensitivity crosses 95% **for the last time** (so it stays ≥ 95% at every higher grid FF),
+  linearly interpolated between the two grid FFs around the crossing; point estimate
+- **conservative:** the same using `sens_lo` (Wilson lower bound)
+- **check:** the same using `sens_at_fpr` (point estimate only, no CI or bootstrap needed). Flag any method/condition
+  where this differs from the main value by more than one grid step.
+- report "< 1%" if already ≥ 95% at FF 1%, and "> 15%" if never reached
+→ `results/tables/detection_limits.csv`
 
 ## 3F. Milestone: one condition end-to-end
 Run **FF 4%, depth 5M, sigma 0** and send Maya the results rows for all five methods.
