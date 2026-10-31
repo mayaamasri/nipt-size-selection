@@ -164,7 +164,7 @@ def sanity_checks(results, test_normal_za, n_reference, target_fpr):
 
     ok = a.fpr_lo <= target_fpr <= a.fpr_hi
     print(f"1. A test FPR {100 * a.fpr:.3f}% [{100 * a.fpr_lo:.3f}, {100 * a.fpr_hi:.3f}] "
-          f"contains {100 * target_fpr:.2f}%: {'PASS' if ok else 'FAIL'}")
+          f"contains {100 * target_fpr:.3f}%: {'PASS' if ok else 'FAIL'}")
 
     n = len(test_normal_za)
     mean, sd = test_normal_za.mean(), test_normal_za.std(ddof=1)
