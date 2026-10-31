@@ -6,8 +6,9 @@ Per method:
   auc                      ROC AUC of the method's score
   sens_at_fpr              sensitivity at FPR exactly target_fpr, read from the test ROC by linear
                            interpolation between the two nearest ROC points
-Per condition, for method B: g = FF inside the window / overall FF and r = fraction of fragments inside
-the window, exact from the post-mappability matrices (normal fetal matrix), no sampling.
+Per condition, for every size-selection method (B, B_c, B-opt): g = FF inside its window / overall FF and
+r = fraction of fragments inside the window, exact from the post-mappability matrices (normal fetal matrix),
+no sampling.
 
 Run from the repo root to check sens_at_fpr on hand-computed examples and print g and r at FF 4% and 10%:
     python -m src.evaluate.metrics
@@ -59,10 +60,10 @@ def evaluate(y, scores, calls, target_fpr):
             "auc": float(roc_auc_score(y, scores)), "sens_at_fpr": sens_at_fpr(y, scores, target_fpr)}
 
 
-def g_and_r(matrices, ff, config):
-    """g and r for method B's window (size_selection_window_bp)."""
+def g_and_r(matrices, ff, config, upper=None):
+    """g and r for the window lo..upper, lo from size_selection_window_bp (B's window if upper is None)."""
     lo, hi = config["methods"]["size_selection_window_bp"]
-    w = window_stats(matrices, ff, lo, hi)
+    w = window_stats(matrices, ff, lo, hi if upper is None else upper)
     return float(w["gain"]), float(w["r"])
 
 

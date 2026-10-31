@@ -1,4 +1,4 @@
-"""Task 3B: methods A, B and B-opt (decisions #5, #6).
+"""Task 3B / 4B: z-score methods A, B, B-opt, B_c, W and W_fixedFF (decisions #5, #6, #15).
 
   A      zA = z-score of the chr21 fraction, all fragments. Positive if zA > z_threshold.
   B      zB = z-score of the chr21 fraction, fragments size_selection_window_bp only (40-156 bp).
@@ -6,6 +6,9 @@
   B-opt  same as B with window lo..u, lo = size_selection_window_bp[0]. u is chosen from
          size_opt_upper_grid on the TRAINING set as the one maximising
          mean zB_u(training T21) - mean zB_u(training normals), then used unchanged on the test set.
+  B_c    same as B with the fixed window lo..c, one method per c in size_fixed_upper_extra (decision #15a).
+  W      z_weighted > z_threshold, no tree (decision #15b).
+  W_fixedFF  same as W with the weights at FF = weight_fixed_ff in every condition (decision #15c).
 
 All z-scores are against the condition's reference normals (src.methods.reference).
 
@@ -45,18 +48,27 @@ def choose_opt_cutoff(train_normal_z, train_t21_z, config):
     return grid[int(np.argmax([sep[u] for u in grid]))], sep
 
 
+def fixed_cutoff_methods(config):
+    """B_c method names, in size_fixed_upper_extra order: dict name -> upper cutoff (bp)."""
+    return {f"B_{c}": c for c in config["methods"]["size_fixed_upper_extra"]}
+
+
 def zscore_methods(test_z, train_normal_z, train_t21_z, config):
-    """Scores, calls and cutoff for A, B and B-opt on the test patients.
+    """Scores, calls and cutoff for every z-score method on the test patients: A, B, B_c, B-opt, W, W_fixedFF.
 
     Returns (methods, sep): methods is dict method -> {"scores": array, "calls": bool array,
-    "cutoff": upper bp or None}; sep is the B-opt separation table {upper_bp: separation}.
+    "cutoff": upper bp of the size window, or None if the method keeps all lengths}; sep is the B-opt
+    separation table {upper_bp: separation}.
     """
     t = config["methods"]["z_threshold"]
     hi_b = config["methods"]["size_selection_window_bp"][1]
     u, sep = choose_opt_cutoff(train_normal_z, train_t21_z, config)
     scores = {"A": (test_z["frac_all"], None),
               "B": (test_z[window_name(config)], hi_b),
-              "B-opt": (test_z[window_name(config, u)], u)}
+              **{m: (test_z[window_name(config, c)], c) for m, c in fixed_cutoff_methods(config).items()},
+              "B-opt": (test_z[window_name(config, u)], u),
+              "W": (test_z["weighted"], None),
+              "W_fixedFF": (test_z["weighted_fixedff"], None)}
     return {m: {"scores": s, "calls": s > t, "cutoff": c} for m, (s, c) in scores.items()}, sep
 
 

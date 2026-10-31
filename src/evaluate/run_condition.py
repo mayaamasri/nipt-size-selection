@@ -1,7 +1,8 @@
 """Task 3E/3F: run one condition end to end and write its results.
 
 Generates each group of the condition once (reference, train_normal, train_t21, test_normal, test_t21,
-calibration), runs A, B, B-opt (src.methods.zscore) and C1, C2 (src.methods.trees), evaluates them on the
+calibration), runs the z-score methods A, B, B_c, B-opt, W, W_fixedFF (src.methods.zscore) and the trees
+C1, C2 (src.methods.trees), evaluates them on the
 test set (src.evaluate.metrics) and writes, under results/tables/:
   results_all.csv              one row per condition x method
   bopt_separation.csv          B-opt separation per upper cutoff, on the training set
@@ -29,22 +30,26 @@ from src.evaluate.metrics import evaluate, g_and_r
 from src.methods.features import TREE_FEATURES
 from src.methods.reference import build_reference, statistics, zscores
 from src.methods.trees import fit_tree_method
-from src.methods.zscore import zscore_methods
+from src.methods.zscore import fixed_cutoff_methods, zscore_methods
 from src.simulate.patients import GROUPS, generate_group, origin_matrices
 
 CONDITION = ["ff", "depth", "noise"]
-METHODS = ["A", "B", "B-opt", "C1", "C2"]
 RESULT_COLUMNS = CONDITION + ["method", "sens", "sens_lo", "sens_hi", "fpr", "fpr_lo", "fpr_hi", "auc",
                               "sens_at_fpr", "g", "r", "cutoff", "threshold", "max_depth", "calib_fpr",
                               "nobody_positive"]
 # Per table: columns to sort by after the condition, and fixed orders for text columns
 SORT = {
-    "results_all.csv": (["method"], {"method": METHODS}),
+    "results_all.csv": (["method"], {}),  # method order from method_order(config)
     "bopt_separation.csv": (["upper_bp"], {}),
     "c2_feature_importances.csv": (["feature"], {"feature": TREE_FEATURES["C2"]}),
     "tree_cv_auc.csv": (["method", "max_depth"], {"method": list(TREE_FEATURES)}),
     "run_log.csv": ([], {}),
 }
+
+
+def method_order(config):
+    """Every method, in the order of the results tables."""
+    return ["A", "B", *fixed_cutoff_methods(config), "B-opt", "W", "W_fixedFF", *TREE_FEATURES]
 
 
 def parse_noise(text):
@@ -80,13 +85,14 @@ def run_condition(config, ff, depth, noise):
     z_methods, sep = zscore_methods(test_z, z["train_normal"], z["train_t21"], config)
     trees = {m: fit_tree_method(m, z["train_normal"], z["train_t21"], z["calibration"], test_z, config)
              for m in TREE_FEATURES}
-    g, r = g_and_r(matrices, ff, config)
 
     cond = {"ff": ff, "depth": depth, "noise": str(noise)}
     rows = []
     for method, res in {**z_methods, **trees}.items():
+        # g and r of the size window, for the methods that have one (B, B_c, B-opt)
+        g, r = g_and_r(matrices, ff, config, res["cutoff"]) if res.get("cutoff") is not None else (np.nan, np.nan)
         rows.append({**cond, "method": method, **evaluate(y, res["scores"], res["calls"], target),
-                     "g": g if method == "B" else np.nan, "r": r if method == "B" else np.nan,
+                     "g": g, "r": r,
                      "cutoff": res.get("cutoff"), "threshold": res.get("threshold"),
                      "max_depth": res.get("max_depth"), "calib_fpr": res.get("calib_fpr"),
                      "nobody_positive": res.get("nobody_positive")})
@@ -111,7 +117,7 @@ def run_condition(config, ff, depth, noise):
 def sort_table(table, name, config):
     """Sort by ff, depth, noise (config grid order), then the table's own columns (fixed orders for text)."""
     extra, orders = SORT[name]
-    orders = {"noise": [str(v) for v in config["grid"]["noise_sigma"]], **orders}
+    orders = {"noise": [str(v) for v in config["grid"]["noise_sigma"]], "method": method_order(config), **orders}
 
     def key(col):
         if col.name in orders:

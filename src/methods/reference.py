@@ -2,12 +2,14 @@
 
 Raw statistics per patient (X has shape (n, 2, 465): row 0 chr21, row 1 other autosomes, column j = 36 + j bp):
   frac_all            chr21 fraction, all fragments                          (method A, feature zA)
-  frac_<lo>_<hi>      chr21 fraction, fragments lo..hi bp only               (method B: 40-156; B-opt: 40-u)
+  frac_<lo>_<hi>      chr21 fraction, fragments lo..hi bp only     (method B: 40-156; B-opt: 40-u; B_c: 40-c)
   short_excess        Yu: share of <= short_fragment_bp on chr21 minus share on other autosomes  (z_short)
-  weighted            chr21 fraction with each length weighted by w(l) = P(fetal | l)            (z_weighted)
+  weighted            chr21 fraction with each length weighted by w(l) = P(fetal | l)  (z_weighted, method W)
+  weighted_fixedff    same as weighted, with w(l) at FF = weight_fixed_ff in every condition  (W_fixedFF)
 
 w(l) = FF * p_f(l) / (FF * p_f(l) + (1 - FF) * p_m(l)), with p_f, p_m the length distributions after
-mappability (normal fetal and maternal matrices from origin_matrices, summed over the two rows).
+mappability (normal fetal and maternal matrices from origin_matrices, summed over the two rows). weighted uses
+the condition's true FF.
 
 The reference for a condition is the mean and SD (ddof=1) of each statistic over its reference normals.
 
@@ -22,11 +24,13 @@ from src.simulate.patients import CHR21, OTHER, generate_group, origin_matrices
 
 
 def window_names(config):
-    """Names of the windowed chr21 fractions: B's window, then one per B-opt upper cutoff."""
+    """Names of the windowed chr21 fractions: B's window, then one per B-opt and B_c upper cutoff."""
     m = config["methods"]
     lo, hi = m["size_selection_window_bp"]
     names = [f"frac_{lo}_{hi}"]
-    names += [f"frac_{lo}_{u}" for u in m["size_opt_upper_grid"] if f"frac_{lo}_{u}" not in names]
+    for u in m["size_opt_upper_grid"] + m["size_fixed_upper_extra"]:
+        if f"frac_{lo}_{u}" not in names:
+            names.append(f"frac_{lo}_{u}")
     return names
 
 
@@ -57,6 +61,8 @@ def statistics(X, ff, config, matrices):
 
     w = posterior_weights(ff, matrices)
     out["weighted"] = (chr21 @ w) / ((chr21 + other) @ w)
+    w = posterior_weights(config["methods"]["weight_fixed_ff"], matrices)
+    out["weighted_fixedff"] = (chr21 @ w) / ((chr21 + other) @ w)
 
     for name, v in out.items():
         bad = ~np.isfinite(v)

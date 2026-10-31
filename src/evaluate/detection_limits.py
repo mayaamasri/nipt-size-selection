@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from src.config import load_config, repo_path
-from src.evaluate.run_condition import METHODS
+from src.evaluate.run_condition import method_order
 
 GROUP = ["method", "depth", "noise"]
 LIMIT_COLUMNS = GROUP + ["ff_limit", "ff_limit_text", "ff_limit_cons", "ff_limit_cons_text",
@@ -85,7 +85,8 @@ def detection_limits(results, config):
                          at_fpr_pos_diff=diff, at_fpr_flag=bool(diff > FLAG_STEPS + 1e-9)))
     table = pd.DataFrame(rows, columns=LIMIT_COLUMNS)
     noise_order = [str(v) for v in config["grid"]["noise_sigma"]]
-    table = table.sort_values(GROUP, key=lambda c: c.map({m: i for i, m in enumerate(METHODS)}) if c.name == "method"
+    methods = method_order(config)
+    table = table.sort_values(GROUP, key=lambda c: c.map({m: i for i, m in enumerate(methods)}) if c.name == "method"
                               else c.map({n: i for i, n in enumerate(noise_order)}) if c.name == "noise" else c,
                               kind="stable").reset_index(drop=True)
     return table, skipped
