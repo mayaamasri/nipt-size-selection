@@ -4,7 +4,10 @@ Generates each group of the condition once (reference, train_normal, train_t21, 
 calibration), runs the z-score methods A, B, B_c, B-opt, W, W_fixedFF (src.methods.zscore) and the trees
 C1, C2 (src.methods.trees), evaluates them on the
 test set (src.evaluate.metrics) and writes, under results/tables/:
-  results_all.csv              one row per condition x method
+  results_all.csv              one row per condition x method; for the z-score methods also z_mean_t21 (mean
+                               score of the test T21), z_mean_normal (mean score of the test normals) and
+                               z_sd_normal (SD, ddof=1, of the test normals' scores), NaN for the trees; sigma (numeric noise level) and p0 = q(chr21) on
+                               every row
   bopt_separation.csv          B-opt separation per upper cutoff, on the training set
   c2_feature_importances.csv   C2 feature importances
   tree_cv_auc.csv              mean CV AUC per max_depth, C1 and C2
@@ -31,12 +34,12 @@ from src.methods.features import TREE_FEATURES
 from src.methods.reference import build_reference, statistics, zscores
 from src.methods.trees import fit_tree_method
 from src.methods.zscore import fixed_cutoff_methods, zscore_methods
-from src.simulate.patients import GROUPS, generate_group, origin_matrices
+from src.simulate.patients import CHR21, GROUPS, generate_group, noise_sigma, origin_matrices
 
 CONDITION = ["ff", "depth", "noise"]
-RESULT_COLUMNS = CONDITION + ["method", "sens", "sens_lo", "sens_hi", "fpr", "fpr_lo", "fpr_hi", "auc",
-                              "sens_at_fpr", "g", "r", "cutoff", "threshold", "max_depth", "calib_fpr",
-                              "nobody_positive"]
+RESULT_COLUMNS = CONDITION + ["sigma", "method", "sens", "sens_lo", "sens_hi", "fpr", "fpr_lo", "fpr_hi", "auc",
+                              "sens_at_fpr", "z_mean_t21", "z_mean_normal", "z_sd_normal", "p0", "g", "r", "cutoff", "threshold",
+                              "max_depth", "calib_fpr", "nobody_positive"]
 # Per table: columns to sort by after the condition, and fixed orders for text columns
 SORT = {
     "results_all.csv": (["method"], {}),  # method order from method_order(config)
@@ -87,12 +90,21 @@ def run_condition(config, ff, depth, noise):
              for m in TREE_FEATURES}
 
     cond = {"ff": ff, "depth": depth, "noise": str(noise)}
+    p0 = float(matrices["maternal"][CHR21].sum())
     rows = []
     for method, res in {**z_methods, **trees}.items():
         # g and r of the size window, for the methods that have one (B, B_c, B-opt)
         g, r = g_and_r(matrices, ff, config, res["cutoff"]) if res.get("cutoff") is not None else (np.nan, np.nan)
-        rows.append({**cond, "method": method, **evaluate(y, res["scores"], res["calls"], target),
-                     "g": g, "r": r,
+        # Observed signal and noise of the z-score methods (break-even check, Task 05); trees score probabilities
+        if method in z_methods:
+            normal = res["scores"][y == 0]
+            z_mean_t21 = float(res["scores"][y == 1].mean())
+            z_mean_normal, z_sd_normal = float(normal.mean()), float(normal.std(ddof=1))
+        else:
+            z_mean_t21 = z_mean_normal = z_sd_normal = np.nan
+        rows.append({**cond, "sigma": noise_sigma(config, noise), "method": method,
+                     **evaluate(y, res["scores"], res["calls"], target),
+                     "z_mean_t21": z_mean_t21, "z_mean_normal": z_mean_normal, "z_sd_normal": z_sd_normal, "p0": p0, "g": g, "r": r,
                      "cutoff": res.get("cutoff"), "threshold": res.get("threshold"),
                      "max_depth": res.get("max_depth"), "calib_fpr": res.get("calib_fpr"),
                      "nobody_positive": res.get("nobody_positive")})
