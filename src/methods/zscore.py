@@ -4,8 +4,10 @@
   B      zB = z-score of the chr21 fraction, fragments size_selection_window_bp only (40-156 bp).
          Positive if zB > z_threshold.
   B-opt  same as B with window lo..u, lo = size_selection_window_bp[0]. u is chosen from
-         size_opt_upper_grid on the TRAINING set as the one maximising
-         mean zB_u(training T21) - mean zB_u(training normals), then used unchanged on the test set.
+         size_opt_upper_grid on the TRAINING set as the one maximising the standardised separation
+         (mean T21 - mean normal) / SD of the training normals, which uses the training normals' own mean
+         and SD, not the reference's (decision #6). The chosen window is then z-scored against the
+         reference and used unchanged on the test set, like B.
   B_c    same as B with the fixed window lo..c, one method per c in size_fixed_upper_extra (decision #15a).
   W      z_weighted > z_threshold, no tree (decision #15b).
   W_fixedFF  same as W with the weights at FF = weight_fixed_ff in every condition (decision #15c).
@@ -31,12 +33,16 @@ def window_name(config, upper=None):
 
 
 def separation(train_normal_z, train_t21_z, name):
-    """Mean z of training T21 minus mean z of training normals, for one statistic."""
-    return float(train_t21_z[name].mean() - train_normal_z[name].mean())
+    """Standardised separation of one statistic on the training set (decision #6):
+    (mean T21 - mean normal) / SD of the training normals (ddof=1). It equals the same quantity on the raw
+    statistic, since z is a linear transform of it: the reference mean and SD cancel, so the choice of the
+    B-opt cutoff does not depend on the reference."""
+    n, t = train_normal_z[name], train_t21_z[name]
+    return float((t.mean() - n.mean()) / n.std(ddof=1))
 
 
 def opt_separation(train_normal_z, train_t21_z, config):
-    """Per B-opt upper cutoff: mean z of training T21 minus mean z of training normals."""
+    """Per B-opt upper cutoff: standardised separation on the training set."""
     return {u: separation(train_normal_z, train_t21_z, window_name(config, u))
             for u in config["methods"]["size_opt_upper_grid"]}
 
@@ -83,7 +89,7 @@ def main():
     u, sep = choose_opt_cutoff(z["train_normal"], z["train_t21"], config)
     print(f"B-opt on training set: FF {ff:.0%}, depth {depth:,}, noise {noise}")
     for cutoff, s in sep.items():
-        print(f"  40-{cutoff} bp: mean zB(T21) - mean zB(normal) = {s:.3f}{'  <- chosen' if cutoff == u else ''}")
+        print(f"  40-{cutoff} bp: standardised separation = {s:.3f}{'  <- chosen' if cutoff == u else ''}")
     print(f"  A (all fragments): {separation(z['train_normal'], z['train_t21'], 'frac_all'):.3f}")
     print(f"  B ({window_name(config)}): {separation(z['train_normal'], z['train_t21'], window_name(config)):.3f}")
 
