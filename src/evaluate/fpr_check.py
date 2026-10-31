@@ -73,7 +73,8 @@ def fpr_check(results, config):
     noise_order = {str(v): i for i, v in enumerate(config["grid"]["noise_sigma"])} | {"all": -1}
     level_order = {lv: i for i, lv in enumerate(LEVELS)}
     return table.sort_values(["level", "method", "depth", "noise"], kind="stable", key=lambda c: c.map(
-        {"level": level_order, "method": order, "depth": depth_order, "noise": noise_order}[c.name])).reset_index(drop=True)
+        {"level": level_order, "method": order, "depth": depth_order, "noise": noise_order}[c.name])
+    ).reset_index(drop=True)
 
 
 def main():
@@ -88,10 +89,12 @@ def main():
 
     print(f"FPR of the z-score methods, target {100 * target:.3f}%, z > {config['methods']['z_threshold']}")
     print("\nAll conditions pooled (% ; CI = Wilson 95%):")
-    print(f"{'method':>9} {'conds':>5} {'FP':>5} {'fpr':>6} {'CI':>15} {'exp_skew':>8} {'>tgt':>4} {'CI>tgt':>6} {'CI<tgt':>6}")
+    print(f"{'method':>9} {'conds':>5} {'FP':>5} {'fpr':>6} {'CI':>15} {'exp_skew':>8} {'>tgt':>4} "
+          f"{'CI>tgt':>6} {'CI<tgt':>6}")
     for r in table[table["level"] == "method"].itertuples():
         print(f"{r.method:>9} {r.n_conditions:5d} {r.false_positives:5d} {pct(r.fpr):>6} "
-              f"[{pct(r.fpr_lo)}, {pct(r.fpr_hi)}] {pct(r.expected_fpr_skew) if np.isfinite(r.expected_fpr_skew) else '':>8} "
+              f"[{pct(r.fpr_lo)}, {pct(r.fpr_hi)}] "
+              f"{pct(r.expected_fpr_skew) if np.isfinite(r.expected_fpr_skew) else '':>8} "
               f"{r.n_above_target:4d} {r.n_ci_above_target:6d} {r.n_ci_below_target:6d}")
     for level, col in (("method_depth", "depth"), ("method_noise", "noise")):
         sub = table[table["level"] == level]
@@ -101,8 +104,9 @@ def main():
         exp = sub.pivot(index="method", columns=col, values="expected_fpr_skew").reindex_like(obs)
         print(f"{'method':>9} " + " ".join(f"{c:>17}" for c in obs.columns))
         for m in obs.index:
-            print(f"{m:>9} " + " ".join(f"{pct(obs.loc[m, c]):>7} [{pct(exp.loc[m, c]) if np.isfinite(exp.loc[m, c]) else '  -  '}]".rjust(17)
-                                        for c in obs.columns))
+            print(f"{m:>9} " + " ".join(
+                f"{pct(obs.loc[m, c]):>7} [{pct(exp.loc[m, c]) if np.isfinite(exp.loc[m, c]) else '  -  '}]".rjust(17)
+                for c in obs.columns))
     out = tables / "fpr_check.csv"
     table.to_csv(out, index=False, float_format="%.8g")
     print(f"\nWrote {len(table)} rows to {out}")

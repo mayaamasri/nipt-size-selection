@@ -1,14 +1,14 @@
-"""Task 3B / 4B: z-score methods A, B, B-opt, B_c, W and W_fixedFF (decisions #5, #6, #15).
+"""Task 3B / 4B: z-score methods A, B, B_c, B-opt, W and W_fixedFF (decisions #5, #6, #15).
 
   A      zA = z-score of the chr21 fraction, all fragments. Positive if zA > z_threshold.
   B      zB = z-score of the chr21 fraction, fragments size_selection_window_bp only (40-156 bp).
          Positive if zB > z_threshold.
+  B_c    same as B with the fixed window lo..c, one method per c in size_fixed_upper_extra (decision #15a).
   B-opt  same as B with window lo..u, lo = size_selection_window_bp[0]. u is chosen from
          size_opt_upper_grid on the TRAINING set as the one maximising the standardised separation
          (mean T21 - mean normal) / SD of the training normals, which uses the training normals' own mean
          and SD, not the reference's (decision #6). The chosen window is then z-scored against the
          reference and used unchanged on the test set, like B.
-  B_c    same as B with the fixed window lo..c, one method per c in size_fixed_upper_extra (decision #15a).
   W      z_weighted > z_threshold, no tree (decision #15b).
   W_fixedFF  same as W with the weights at FF = weight_fixed_ff in every condition (decision #15c).
 
