@@ -9,6 +9,12 @@ normalised over the 2 x 465 cells. Trisomy 21: the fetal chr21 row is multiplied
 grid.trisomy_fetal_chr21_multiplier, then renormalised. A patient with fetal fraction FF and depth N
 is rng.multinomial(N, FF * P_fetal + (1 - FF) * P_maternal).
 
+Noise (decision #7): with sigma > 0, each patient draws eps ~ Normal(0, sigma); the whole chr21 row of its
+mixture is multiplied by (1 + eps), renormalised, and its counts are drawn from that. eps and counts come from
+the patient stream, one patient at a time. sigma = 0 draws no eps, so those patients are byte-identical to the
+generator without noise. A grid noise level's sigma is grid.noise_sigma_values at the level's position in
+grid.noise_sigma.
+
 Seeds (all from config seed):
   grid patients  SeedSequence(seed, spawn_key=(1, i_ff, i_depth, i_noise, i_group)), indices = positions
                  in the config grid lists and in GROUPS, so a condition gives the same patients
@@ -78,12 +84,25 @@ def mixture(ff, trisomy, matrices):
 def generate_patients(ff, depth, n_patients, trisomy, sigma=0.0, *, rng, matrices=None):
     """Counts of surviving fragments, array (n_patients, 2, 465): [:, 0] chr21, [:, 1] other autosomes.
 
+    sigma: relative SD of the noise on the chr21 row (decision #7). sigma = 0 draws no eps at all, so the
+    patients are byte-identical to the generator without noise.
     matrices: from origin_matrices(config). If None, matrices built from config/config.yaml are used.
     """
-    if sigma != 0:
-        raise NotImplementedError("noise (sigma > 0) comes in Task 02b, decision #7")
     p = mixture(ff, trisomy, _cached_matrices() if matrices is None else matrices)
-    counts = rng.multinomial(depth, p.ravel(), size=n_patients)
+    if sigma == 0:
+        counts = rng.multinomial(depth, p.ravel(), size=n_patients)
+        return counts.reshape(n_patients, *p.shape)
+    if sigma < 0:
+        raise ValueError(f"sigma must be >= 0, got {sigma!r}")
+    # Per patient: eps, then its counts, from the same stream (so batches give the same patients as one call)
+    counts = np.empty((n_patients, p.size), dtype=np.int64)
+    for i in range(n_patients):
+        eps = rng.normal(0.0, sigma)
+        if eps <= -1:
+            raise ValueError(f"patient {i}: eps = {eps!r} makes the chr21 row non-positive")
+        p_i = p.copy()
+        p_i[CHR21] *= 1 + eps
+        counts[i] = rng.multinomial(depth, (p_i / p_i.sum()).ravel())
     return counts.reshape(n_patients, *p.shape)
 
 
@@ -131,17 +150,26 @@ def patient_seed(config, ff, depth, noise, group):
     return np.random.SeedSequence(config["seed"], spawn_key=key)
 
 
+def noise_sigma(config, noise):
+    """Numeric sigma of a noise level, from grid.noise_sigma_values at the level's position in grid.noise_sigma."""
+    grid = config["grid"]
+    values = grid["noise_sigma_values"]
+    if len(values) != len(grid["noise_sigma"]) or values[0] != 0:
+        raise ValueError(f"grid.noise_sigma_values {values} must match grid.noise_sigma {grid['noise_sigma']} "
+                         f"in length and start with 0")
+    return float(values[_grid_index(grid["noise_sigma"], noise, "noise_sigma")])
+
+
 def generate_group(config, ff, depth, noise, group, matrices=None):
     """All patients of one group of one grid condition (size from patients_per_condition).
 
     matrices: from origin_matrices(config); built from the given config if None (pass them in when
     generating many groups, to build them once).
     """
-    if noise not in NO_NOISE:
-        raise NotImplementedError("noise levels other than none come in Task 02b")
     rng = np.random.default_rng(patient_seed(config, ff, depth, noise, group))
     return generate_patients(ff, depth, config["patients_per_condition"][group], group.endswith("t21"),
-                             rng=rng, matrices=origin_matrices(config) if matrices is None else matrices)
+                             noise_sigma(config, noise), rng=rng,
+                             matrices=origin_matrices(config) if matrices is None else matrices)
 
 
 def qc_rng(config, run):
