@@ -33,12 +33,12 @@ All parameters are in `config/config.yaml`; every design choice and its reason i
 config/config.yaml     all study parameters (single source of truth)
 docs/decisions.md      design decision log + work split
 docs/tasks/            task briefs
+docs/captions.md       generated figure and table captions (do not edit)
 scripts/               setup, mapping and run_all.sh
 src/simulate/          fragment generation, mapping, mappability pool, virtual patients
 src/methods/           z-score methods (A, B, B_c, B-opt, W, W_fixedFF) and decision trees (C1, C2)
 src/evaluate/          one condition end to end, detection limits, bootstrap, break-even check, tables
 src/evaluate/figures/  one script per manuscript figure
-notebooks/             exploration only - final results must come from scripts
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
 manuscript/            manuscript source
