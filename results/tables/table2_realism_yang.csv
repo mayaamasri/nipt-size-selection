@@ -1,0 +1,6 @@
+quantity,at,ours,yang,ours_value
+Reads kept in 40–156 bp (r),FF 4%,20.3%,24.76% of the original reads kept,0.203177
+Reads kept in 40–156 bp (r),FF 10%,22.1%,24.76% of the original reads kept,0.22128
+"FF gain, low FF (g)",FF 2.85% (Yang's low-FF median),2.47×,2.75× (median 2.85% → 7.84%),2.46773
+"FF gain, low FF (g)",FF 3%,2.46×,3× when FF < 3%,2.46215
+"FF gain, typical FF (g)",FF 10%,2.23×,~2× on average (cohort FF not reported),2.22715
