@@ -97,7 +97,8 @@ def save_figure(fig, config, name, tight_layout=True):
     if tight_layout:
         fig.tight_layout(pad=0.6)   # keeps edge tick labels (e.g. "500") clear of the figure edge
     for p in paths:
-        fig.savefig(p, dpi=DPI, facecolor=SURFACE)
+        # No creation date in the PDF, so rerunning a figure reproduces the same bytes
+        fig.savefig(p, dpi=DPI, facecolor=SURFACE, metadata={"CreationDate": None} if p.suffix == ".pdf" else None)
     plt.close(fig)
     print(f"{name}: {width:.2f} x {height:.2f} in, smallest text {small:g} pt")
     return paths
