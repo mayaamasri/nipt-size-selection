@@ -28,6 +28,7 @@ from src.simulate.patients import origin_matrices, window_stats
 FIG_FF = 0.04                       # brief: panel (c) at FF 4%
 UPPER = np.arange(120, 171)         # brief: upper cutoff 120-170 bp at every bp, lower = 40
 FIG_HEIGHT = 4.4                    # in, at FIG_WIDTH
+S_AXIS = (74, 92)                   # panel (b) y-axis, % (quoted in the caption)
 LABEL_BOX = {"facecolor": SURFACE, "edgecolor": "none", "pad": 0.5}   # reference lines pass behind labels
 SHADE = "#f1f1ef"                   # LABEL_BOX face inside the shaded "B worse" area of (e)
 
@@ -36,11 +37,13 @@ CAPTION = (
     "mappability filter (Rabinowitz G1 lengths × survival); shaded: the 40–156 bp window of Yang et al. "
     "(b) Survival (proper pair, both mates MAPQ ≥ 40) in 10 bp bins with Wilson 95% CI; the simulation uses "
     "the pooled value for both origins, and the maternal and fetal curves show that origin does not change "
-    "survival within a bin (y-axis starts at 74%). (c–e) Exact values for windows 40–c bp at FF 4%, against "
-    "the upper cutoff c (dotted: Yang's 156 bp): (c) FF enrichment g, which peaks at 132 bp (g = 3.69; 2.43 at "
-    "156 bp); (d) fraction of fragments kept r (20.3% at 156 bp); (e) g·√r, the ratio of B's to A's "
+    "survival within a bin (y-axis starts at {s_axis_min:g}%). (c–e) Exact values for windows 40–c bp at FF 4%, against "
+    "the upper cutoff c (dotted: Yang's {yang} bp): (c) FF enrichment g, which peaks at {g_peak_bp} bp "
+    "(g = {g_peak:.2f}; {g_yang:.2f} at {yang} bp); (d) fraction of fragments kept r ({r_yang:.1%} at {yang} bp); "
+    "(e) g·√r, the ratio of B's to A's "
     "standardised separation without extra noise (decision #8). Below the dashed line at 1 (cutoffs under "
-    "143 bp) size selection stops paying off when counting noise is the only noise; it peaks at 157 bp (1.09). "
+    "{cross_bp} bp) size selection stops paying off when counting noise is the only noise; it peaks at "
+    "{gain_peak_bp} bp ({gain_peak:.2f}). "
     "With extra noise the ratio moves towards g; Fig. 4 compares the full prediction with the simulation."
 )
 
@@ -77,7 +80,7 @@ def panel_survival(ax, surv):
     style_axes(ax, "(b) Survival S(l), 10 bp bins", "Fragment length (bp)", "Survival (%)")
     ax.set_xticks([100, 200, 300, 400, 500])
     ax.set_xlim(edges[0] - 4, edges[-1] + 4)
-    ax.set_ylim(74, 92)
+    ax.set_ylim(*S_AXIS)
     ax.set_yticks([75, 80, 85, 90])
     style_legend(ax, loc="lower right")
 
@@ -133,6 +136,18 @@ def cutoff_panels(axes, matrices, window, opt_grid):
     return g, r, gain, i_cross
 
 
+def caption(config):
+    """Caption with its numbers computed from the length/mappability model."""
+    window = config["methods"]["size_selection_window_bp"]
+    g, r = exact_g_r(origin_matrices(config), FIG_FF, UPPER, window[0])
+    gain = g * np.sqrt(r)
+    i_yang = int(np.flatnonzero(UPPER == window[1])[0])
+    i_g, i_gain = int(np.argmax(g)), int(np.argmax(gain))
+    return CAPTION.format(s_axis_min=S_AXIS[0], yang=window[1], g_peak_bp=UPPER[i_g], g_peak=g[i_g],
+                          g_yang=g[i_yang], r_yang=r[i_yang], cross_bp=UPPER[int(np.flatnonzero(gain >= 1)[0])],
+                          gain_peak_bp=UPPER[i_gain], gain_peak=gain[i_gain])
+
+
 def main():
     config = load_config()
     matrices = origin_matrices(config)
@@ -158,7 +173,7 @@ def main():
     print(f"g*sqrt(r) first >= 1 at {UPPER[i_cross]} bp ({gain[i_cross]:.4f}; interpolated crossing {exact:.2f} bp); "
           f"peaks at {UPPER[i_gain]} bp ({gain[i_gain]:.4f})")
     print("Saved " + ", ".join(str(p) for p in paths))
-    print("\nCaption:\n" + CAPTION)
+    print("\nCaption:\n" + caption(config))
 
 
 if __name__ == "__main__":

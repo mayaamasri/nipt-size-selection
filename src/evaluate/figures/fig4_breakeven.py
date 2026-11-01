@@ -5,7 +5,8 @@ z_sd_normal, one series per cutoff (130, 140, 150 from B_c; 156 is B). Points: s
 ratio(N) = g sqrt((1/(p0 N) + sigma^2) / (1/(p0 r N) + sigma^2)) with that cutoff's exact g and r at FF 4%.
 Dashed line at 1 (B = A); predicted break-even depths N* inside the plotted range are marked on it.
 
-Reads results/tables/breakeven_check.csv and breakeven_summary.csv (python -m src.evaluate.breakeven_check).
+Reads results/tables/breakeven_check.csv, breakeven_summary.csv (python -m src.evaluate.breakeven_check) and
+breakeven_ratio_noise.csv (python -m src.evaluate.bootstrap_ratio, for the caption).
 Writes results/figures/fig4_breakeven.png (300 dpi) and .pdf. Run from the repo root:
     python -m src.evaluate.figures.fig4_breakeven
 """
@@ -28,7 +29,7 @@ SERIES = {130: ("#5a8fd3", "o", ":"), 140: ("#2f6fc0", "s", "-."), 150: ("#1f539
 
 CAPTION = (
     "Figure 4. Observed and predicted gain of size selection at FF 4%: ratio of standardised separations "
-    "sep(B_c)/sep(A), sep = (mean z of T21 − mean z of normals)/SD of normals, for upper cutoffs 130, 140, 150 "
+    "sep(B at upper cutoff c)/sep(A), sep = (mean z of T21 − mean z of normals)/SD of normals, for c = 130, 140, 150 "
     "and 156 bp (B). Points: simulation; lines: break-even formula (decision #8) with the exact g and r of each "
     "cutoff at FF 4% and p0 = q(chr21). Dashed: B = A. Without extra noise the ratio is g·√r at every depth "
     "(Fig. 2e); noise lifts it towards g as depth grows, so strict cutoffs that lose at low depth win at high "
@@ -36,7 +37,7 @@ CAPTION = (
     "combinations (breakeven_check.csv), the median |relative error| is {rel_med_all:.1%} (95th percentile "
     "{rel_p95_all:.1%}); without the {n_low} combinations where A's separation is below 1, {rel_med:.1%} "
     "({rel_p95:.1%}). A paired bootstrap of the test patients gives a sampling SD of the observed ratio of "
-    "0.9–2.3%, so the typical error is within sampling noise. The mean signed error is {bias:+.1%} "
+    "{sd_lo:.1f}–{sd_hi:.1f}% (breakeven_ratio_noise.csv), so the typical error is within sampling noise. The mean signed error is {bias:+.1%} "
     "(t = {bias_t:.1f}), with no trend across FF or depth."
 )
 
@@ -72,21 +73,49 @@ def panel(ax, data, sigma, title):
     return marks
 
 
-def main():
-    config = load_config()
+def caption(config):
+    """Caption with its numbers computed from breakeven_check.csv and breakeven_summary.csv."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     table = pd.read_csv(tables / "breakeven_check.csv")
     summary = pd.read_csv(tables / "breakeven_summary.csv")
     data = table[np.isclose(table["ff"], FIG_FF) & table["cutoff"].isin(CUTOFFS)]
     grid = config["grid"]
+    nstar, never = [], []
+    for noise, sigma in zip(grid["noise_sigma"], grid["noise_sigma_values"]):
+        label = "No noise" if sigma == 0 else str(noise).capitalize()
+        for cutoff in CUTOFFS:
+            n = data[(data["noise"] == str(noise)) & (data["cutoff"] == cutoff)]["breakeven_depth"].iloc[0]
+            if np.isfinite(n):
+                nstar.append(f"{cutoff} bp at {label.lower()} noise, {nstar_label(n)}")
+    for cutoff in CUTOFFS:
+        if (data.loc[data["cutoff"] == cutoff, "g2r"] >= 1).all():
+            never.append(str(cutoff))
+    never_text = f"; none for {' and '.join(never)} bp (g²r ≥ 1)" if never else ""
+    row = summary[summary["group"] == "overall"].set_index(["value", "rows"])
+    sd_rel = 100 * pd.read_csv(tables / "breakeven_ratio_noise.csv")["boot_sd_rel"]
+    return CAPTION.format(
+        sd_lo=sd_rel.min(), sd_hi=sd_rel.max(),
+        nstar_text="; ".join(nstar) + never_text,
+        n_all=int(row.loc[("all", "all"), "n"]), n_low=int(row.loc[("all", "all"), "n"]
+                                                          - row.loc[("all", "without_low_signal"), "n"]),
+        rel_med_all=row.loc[("all", "all"), "rel_median"], rel_p95_all=row.loc[("all", "all"), "rel_p95"],
+        rel_med=row.loc[("all", "without_low_signal"), "rel_median"],
+        rel_p95=row.loc[("all", "without_low_signal"), "rel_p95"],
+        bias=row.loc[("all", "without_low_signal"), "rel_mean_signed"],
+        bias_t=row.loc[("all", "without_low_signal"), "rel_mean_t"])
+
+
+def main():
+    config = load_config()
+    table = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "breakeven_check.csv")
+    data = table[np.isclose(table["ff"], FIG_FF) & table["cutoff"].isin(CUTOFFS)]
+    grid = config["grid"]
 
     fig, axes = new_figure(1, 3, figsize=(FIG_WIDTH, FIG_HEIGHT), sharey=True, layout="constrained")
     fig.get_layout_engine().set(rect=(0, 0, 1, 0.88), wspace=0.04)    # room for the legend above
-    nstar = []
     for ax, noise, sigma in zip(axes, grid["noise_sigma"], grid["noise_sigma_values"]):
         label = "No noise" if sigma == 0 else str(noise).capitalize()
-        marks = panel(ax, data[data["noise"] == str(noise)], sigma, f"{label} (σ = {100 * sigma:g}%)")
-        nstar += [f"{c} bp at {label.lower()} noise, {nstar_label(n)}" for c, n in marks]
+        panel(ax, data[data["noise"] == str(noise)], sigma, f"{label} (σ = {100 * sigma:g}%)")
     axes[0].set_ylabel("sep(B) / sep(A)", color=MUTED)
     axes[0].set_ylim(0.7, 1.65)
 
@@ -100,18 +129,8 @@ def main():
     fig.text(0.98, 0.985, "lines: formula · points: simulation", color=MUTED, fontsize=MIN_FONT, ha="right",
              va="top")
     paths = save_figure(fig, config, "fig4_breakeven", tight_layout=False)
-
-    row = summary[summary["group"] == "overall"].set_index(["value", "rows"])
     print("Saved " + ", ".join(str(p) for p in paths))
-    print("\nCaption:\n" + CAPTION.format(
-        nstar_text="; ".join(nstar) + "; none for 150 and 156 bp (g²r ≥ 1)",
-        n_all=int(row.loc[("all", "all"), "n"]), n_low=int(row.loc[("all", "all"), "n"]
-                                                          - row.loc[("all", "without_low_signal"), "n"]),
-        rel_med_all=row.loc[("all", "all"), "rel_median"], rel_p95_all=row.loc[("all", "all"), "rel_p95"],
-        rel_med=row.loc[("all", "without_low_signal"), "rel_median"],
-        rel_p95=row.loc[("all", "without_low_signal"), "rel_p95"],
-        bias=row.loc[("all", "without_low_signal"), "rel_mean_signed"],
-        bias_t=row.loc[("all", "without_low_signal"), "rel_mean_t"]))
+    print("\nCaption:\n" + caption(config))
 
 
 if __name__ == "__main__":

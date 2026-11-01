@@ -4,6 +4,7 @@
 # Before: conda env create -f environment.yml (or environment.lock.yml); conda activate nipt;
 #         bash scripts/download_reference.sh   (GRCh38 analysis set + Bowtie2 index, ~5 GB)
 # Run from anywhere:  bash scripts/run_all.sh
+#                     bash scripts/run_all.sh --skip-pool   (use an existing data/processed/pool as is)
 #
 # Expected run times (measured on an Apple-silicon MacBook, macOS 26, nipt env) are noted per step;
 # total ~45 min from scratch, ~13 min when the pool already exists (measured: 793 s). Every step is deterministic (seeds
@@ -12,6 +13,14 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."   # repo root, so config paths resolve
+
+SKIP_POOL=0
+for arg in "$@"; do
+  case "$arg" in
+    --skip-pool) SKIP_POOL=1 ;;
+    *) echo "usage: bash scripts/run_all.sh [--skip-pool]" >&2; exit 1 ;;
+  esac
+done
 
 if ! python -c "import pysam, sklearn, matplotlib" 2>/dev/null; then
   echo "error: activate the nipt conda env first (conda activate nipt)" >&2
@@ -35,7 +44,11 @@ step() {   # step "<label>" <command...>: run, then print the elapsed time
 step "length distributions QC" python -m src.simulate.lengths
 # Mappability pool: 10M maternal + 10M fetal fragments, 20 chunks, simulated, mapped with Bowtie2 and
 # filtered at MAPQ >= 40 (decision #3): ~32 min (~135 s per chunk); finished chunks are skipped
-step "mappability pool" python -u -m src.simulate.pool
+if [ "$SKIP_POOL" = 1 ]; then
+  echo "==> mappability pool: skipped (--skip-pool), using data/processed/pool as is"
+else
+  step "mappability pool" python -u -m src.simulate.pool
+fi
 # S(l) and q(c) from the pool, QC plots: ~6 s
 step "mappability table" python -m src.simulate.mappability
 # Survival by origin per length bin (Fig. 1, Fig. 2b): ~5 s
@@ -77,6 +90,8 @@ step "FPR check" python -m src.evaluate.fpr_check
 step "bootstrap B - A" python -u -m src.evaluate.bootstrap_diff
 # Break-even formula vs simulation (decision #8, Fig. 4): seconds
 step "break-even check" python -m src.evaluate.breakeven_check
+# Paired bootstrap of the observed ratio sep(B_c)/sep(A) on 4 conditions (Fig. 4 caption): ~5 s
+step "bootstrap ratio" python -m src.evaluate.bootstrap_ratio
 
 # --- 4. Figures and tables (results/figures, results/tables): seconds each -----------------------
 step "Figure 2" python -m src.evaluate.figures.fig2_inputs
@@ -84,6 +99,8 @@ step "Figure 3" python -m src.evaluate.figures.fig3_b_minus_a
 step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
 step "Figure 5 + supplementary" python -m src.evaluate.figures.fig5_methods
 step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
+# All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
+step "captions" python -m src.evaluate.captions
 
 # --- 5. Reproducibility check: rerun one condition and compare with its saved rows: ~3 s ---------
 step "rerun check" python -m src.evaluate.check_rerun

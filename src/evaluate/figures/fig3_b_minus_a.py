@@ -28,12 +28,12 @@ FIG_HEIGHT = 3.6            # in, at FIG_WIDTH
 
 CAPTION = (
     "Figure 3. Difference in sensitivity between size selection (B, 40–156 bp) and all fragments (A), "
-    "sens_at_fpr(B) − sens_at_fpr(A) in percentage points, both read from the test ROC at FPR 0.135%. "
+    "in percentage points: sensitivity of B minus that of A, both at FPR 0.135% (read from the test ROC). "
     "Rows: fetal fraction; columns: depth (fragments passing MAPQ ≥ 40); one panel per noise level. "
     "Blue: B better; red: B worse. Hatched cells with grey italic values: the approximate 95% CI of a paired "
     "bootstrap over the test patients (2,000 resamples) includes 0; the CIs are approximate because the "
     "threshold at FPR 0.135% rests on ~13 of the 10,000 test normals. '=': both methods saturated "
-    "(sens_at_fpr ≥ {saturated:g}%). Small values at low FF and 1M mean that both methods fail there "
+    "(sensitivity at FPR 0.135% ≥ {saturated:g}%). Small values at low FF and 1M mean that both methods fail there "
     "(sensitivity near 0), not that they perform equally well. "
     "Bootstrap SEs range from {se_min:.1f} to {se_max:.1f} points (median {se_med:.1f})."
 )
@@ -85,6 +85,13 @@ def panel(ax, table, ffs, depths, norm, title):
     return image
 
 
+def caption(config):
+    """Caption with its numbers computed from fig3_b_minus_a.csv."""
+    table = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "fig3_b_minus_a.csv")
+    se = 100 * table.loc[~table["saturated"], "se"]
+    return CAPTION.format(saturated=100 * SATURATED, se_min=se.min(), se_max=se.max(), se_med=se.median())
+
+
 def main():
     config = load_config()
     table = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "fig3_b_minus_a.csv")
@@ -109,11 +116,10 @@ def main():
              f"=  both methods ≥ {100 * SATURATED:g}%", color=MUTED, fontsize=MIN_FONT, ha="left", va="bottom")
     paths = save_figure(fig, config, "fig3_b_minus_a", tight_layout=False)   # shared colorbar
 
-    se = 100 * table.loc[~table["saturated"], "se"]
     print(f"Cells: {len(table)}; within noise: {int(table['within_noise'].sum())}; "
           f"saturated: {int(table['saturated'].sum())}")
     print("Saved " + ", ".join(str(p) for p in paths))
-    print("\nCaption:\n" + CAPTION.format(saturated=100 * SATURATED, se_min=se.min(), se_max=se.max(), se_med=se.median()))
+    print("\nCaption:\n" + caption(config))
 
 
 if __name__ == "__main__":

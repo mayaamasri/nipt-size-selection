@@ -32,21 +32,39 @@ TREES = ("C1", "C2")
 CAPTION_TABLE1 = (
     "Table 1. Detection limits (FF at which sensitivity reaches 95% for the last time, decision #13) per depth "
     "and noise level: main estimate from the sensitivity at each method's own threshold, conservative estimate "
-    "from its Wilson 95% lower bound, and a check from sens_at_fpr (flagged if more than one grid step from the "
+    "from its Wilson 95% lower bound, and a check from the sensitivity at FPR 0.135% (flagged if more than one grid step from the "
     "main limit; {n_flags} flags). ✓: at or below the 4% commercial minimum. W has the lowest limit in "
     "{w_lowest} of {n_rows} depth × noise rows ({exceptions}). Tree limits use each tree's real threshold, so "
     "in {n_nobody} of {n_tree_groups} tree groups the limit is interpolated from a grid point where the tree "
     "flags nobody (sensitivity 0); this raises the limit by up to {max_shift:.2f} FF points compared with "
-    "interpolating from sens_at_fpr."
+    "interpolating from the sensitivity at FPR 0.135%."
 )
 CAPTION_TABLE2 = (
     "Table 2. Realism check of the 40–156 bp window against Yang et al. [7]: exact fraction of fragments kept "
     "(r) and FF enrichment (g) from the post-mappability length model (decision #14)."
 )
+CAPTION_BOPT = (
+    "Table S1. B-opt: upper cutoff chosen per condition on the training set (grid 120–170 bp in 5 bp steps, "
+    "lower bound 40 bp; decision #6), with its training separation, and B-opt vs B (40–156 bp) on the test set "
+    "(standardised separation and sensitivity at FPR 0.135%). Chosen cutoffs: {counts}. B-opt − B in "
+    "sensitivity at FPR 0.135%: mean "
+    "{mean:+.2f} points (range {lo:+.1f} to {hi:+.1f})."
+)
 CAPTION_C2 = (
-    "Table S. C2 feature importances (scikit-learn impurity importance) and chosen max depth per condition. At "
+    "Table S2. C2 feature importances (scikit-learn impurity importance) and chosen max depth per condition. At "
     "FF ≥ 10% every method is at or near 100% sensitivity (all ≥ {min_sens:.1%}), so the importances there say "
     "little about the value of each feature."
+)
+CAPTION_W = (
+    "Table S3. W (weights from the true FF) vs W with the weights fixed at FF {fixed_ff:.0%} (W_fixedFF columns) "
+    "per condition: sensitivity at the z > 3 threshold, sensitivity at FPR 0.135% and AUC, and the differences "
+    "fixed − true (sensitivity at FPR 0.135%: "
+    "mean {mean:+.2f} points, largest {largest:.1f} points)."
+)
+CAPTION_W_LIMITS = (
+    "Table S4. Detection limits of W with weights from the true FF and with weights fixed at FF {fixed_ff:.0%} (W_fixedFF "
+    "columns) per depth and noise level (main and conservative); they "
+    "differ by at most {max_diff:.2f} FF points."
 )
 
 
@@ -164,16 +182,15 @@ def w_tables(results, limits, config):
             grid_order(lim.reset_index(), config, ["noise", "depth"]))
 
 
-def main():
-    config = load_config()
+def build_tables(config):
+    """{file name: table} for every table this module writes."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     results = pd.read_csv(tables / "results_all.csv")
     limits = pd.read_csv(tables / "detection_limits.csv")
     sep = pd.read_csv(tables / "bopt_separation.csv")
     imp = pd.read_csv(tables / "c2_feature_importances.csv")
-
     w_per, w_lim = w_tables(results, limits, config)
-    out = {
+    return {
         "table1_detection_limits.csv": table1(limits, config),
         "table2_realism_yang.csv": table2(config),
         "tableS_bopt_cutoff.csv": bopt_table(sep, results, config),
@@ -181,14 +198,39 @@ def main():
         "tableS_w_vs_wfixed.csv": w_per,
         "tableS_w_vs_wfixed_limits.csv": w_lim,
     }
+
+
+def captions(config, out=None):
+    """{table file name: caption}, with every number computed from the data."""
+    out = build_tables(config) if out is None else out
+    results = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "results_all.csv")
+    high = results[(results["ff"] >= 0.10 - 1e-12) & results["method"].isin(TABLE1_METHODS)]
+    bopt, w_per, w_lim = out["tableS_bopt_cutoff.csv"], out["tableS_w_vs_wfixed.csv"], out["tableS_w_vs_wfixed_limits.csv"]
+    counts = bopt["chosen_upper_bp"].value_counts().sort_index()
+    return {
+        "table1_detection_limits.csv": CAPTION_TABLE1.format(
+            **table1_caption_values(out["table1_detection_limits.csv"], results)),
+        "table2_realism_yang.csv": CAPTION_TABLE2,
+        "tableS_bopt_cutoff.csv": CAPTION_BOPT.format(
+            counts=", ".join(f"{c} bp ×{n}" for c, n in counts.items()), mean=100 * bopt["diff_sens_at_fpr"].mean(),
+            lo=100 * bopt["diff_sens_at_fpr"].min(), hi=100 * bopt["diff_sens_at_fpr"].max()),
+        "tableS_c2_importances.csv": CAPTION_C2.format(min_sens=high["sens"].min()),
+        "tableS_w_vs_wfixed.csv": CAPTION_W.format(
+            fixed_ff=config["methods"]["weight_fixed_ff"], mean=100 * w_per["diff_sens_at_fpr"].mean(),
+            largest=100 * w_per["diff_sens_at_fpr"].abs().max()),
+        "tableS_w_vs_wfixed_limits.csv": CAPTION_W_LIMITS.format(fixed_ff=config["methods"]["weight_fixed_ff"], max_diff=100 * w_lim["diff_ff_limit"].abs().max()),
+    }
+
+
+def main():
+    config = load_config()
+    tables = repo_path(config["paths"]["results"]) / "tables"
+    out = build_tables(config)
     for name, table in out.items():
         table.to_csv(tables / name, index=False, float_format="%.6g")
         print(f"Saved {tables / name} ({len(table)} rows)")
-    print("\nCaption (Table 1):\n" + CAPTION_TABLE1.format(**table1_caption_values(out["table1_detection_limits.csv"],
-                                                                                   results)))
-    print("\nCaption (Table 2):\n" + CAPTION_TABLE2)
-    high = results[(results["ff"] >= 0.10 - 1e-12) & results["method"].isin(TABLE1_METHODS)]
-    print("\nCaption (C2 importances):\n" + CAPTION_C2.format(min_sens=high["sens"].min()))
+    for name, text in captions(config, out).items():
+        print(f"\nCaption ({name}):\n{text}")
 
 
 if __name__ == "__main__":
