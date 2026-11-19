@@ -22,7 +22,7 @@ from src.config import load_config, repo_path
 from src.evaluate.breakeven_check import predicted_ratio
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, TEXT, new_figure, save_figure, style_axes
 from src.evaluate.figures.fig4_breakeven import DEPTH_RANGE
-from src.evaluate.robustness_profiles import MAIN, profiles
+from src.evaluate.robustness_profiles import MAIN, POOLED, profiles
 
 FIG_FF = 0.04
 NOISE = "realistic"
@@ -86,8 +86,8 @@ def caption(config):
     """Caption with its numbers computed from the inputs and the summary table."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     inputs = pd.read_csv(tables / "robustness_profiles_inputs.csv").set_index("profile")
-    s = pd.read_csv(tables / "robustness_profiles_summary.csv", dtype={"depth": str, "noise": str})
-    s = s[(s["question"] == 3) & (s["profile"] != MAIN)].set_index(["profile", "item"])["value"]
+    s = pd.read_csv(tables / "robustness_profiles_summary.csv", dtype={"question": str, "depth": str, "noise": str})
+    s = s[(s["question"] == "3") & ~s["profile"].isin([MAIN, POOLED])].set_index(["profile", "item"])["value"]
     b = s.xs("median_abs_rel_error_B_all", level="item")
     wg = s.xs("median_abs_rel_error_W_G1_all", level="item")
     shifts = inputs[inputs["blend_maternal"] == 0].sort_values("shift_bp")
