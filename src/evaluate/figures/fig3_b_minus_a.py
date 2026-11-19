@@ -17,6 +17,7 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.patches import Rectangle
 
 from src.config import load_config, repo_path
+from src.evaluate import labels as L
 from src.evaluate.bootstrap_diff import SATURATED
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, SURFACE, TEXT, new_figure, save_figure
 
@@ -29,21 +30,28 @@ FIG_HEIGHT = 3.6            # in, at FIG_WIDTH
 CAPTION = (
     "Figure 3. Difference in sensitivity between size selection (B, 40–156 bp) and all fragments (A), "
     "in percentage points: sensitivity of B minus that of A, both at FPR 0.135% (read from the test ROC). "
-    "Rows: fetal fraction; columns: depth (fragments passing MAPQ ≥ 40); one panel per noise level. "
+    "Rows: fetal fraction; columns: depth (fragments passing MAPQ ≥ 40); one panel per noise level; "
+    "10,000 euploid and 2,000 trisomic test patients per condition. Values below 0.1 points are shown with two "
+    "decimals so their sign is visible. "
     "Blue: B better; red: B worse. Hatched cells with grey italic values: the approximate 95% CI of a paired "
     "bootstrap over the test patients (2,000 resamples) includes 0; the CIs are approximate because the "
     "threshold at FPR 0.135% rests on ~13 of the 10,000 test normals. '=': both methods saturated "
-    "(sensitivity at FPR 0.135% ≥ {saturated:g}%). Small values at low FF and 1M mean that both methods fail there "
-    "(sensitivity near 0), not that they perform equally well. "
-    "Bootstrap SEs range from {se_min:.1f} to {se_max:.1f} points (median {se_med:.1f})."
+    "(sensitivity at FPR 0.135% ≥ {saturated:g}%)."
 )
 
 
 def cell_text(value, saturated):
+    """Points with one decimal; nonzero values below 0.1 points in size get two decimals and keep their sign
+    (e.g. −0.05), so every negative difference is visible as negative (R2 minor 3). The threshold is explicit, so
+    the text does not depend on how numpy or Python round a value like −0.05."""
     if saturated:
         return "="
-    v = 100 * value
-    return "0.0" if round(v, 1) == 0 else f"{v:+.1f}".replace("-", "−")
+    v = float(100 * value)
+    if v == 0:
+        return "0.0"
+    if abs(v) < 0.1:
+        return f"{v:+.2f}".replace("-", "−")
+    return f"{v:+.1f}".replace("-", "−")
 
 
 def text_color(rgba):
@@ -86,10 +94,8 @@ def panel(ax, table, ffs, depths, norm, title):
 
 
 def caption(config):
-    """Caption with its numbers computed from fig3_b_minus_a.csv."""
-    table = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "fig3_b_minus_a.csv")
-    se = 100 * table.loc[~table["saturated"], "se"]
-    return CAPTION.format(saturated=100 * SATURATED, se_min=se.min(), se_max=se.max(), se_med=se.median())
+    """Caption (describes what is shown; the bootstrap SEs are in fig3_b_minus_a.csv)."""
+    return CAPTION.format(saturated=100 * SATURATED)
 
 
 def main():
@@ -103,9 +109,7 @@ def main():
     fig, axes = new_figure(1, 3, figsize=(FIG_WIDTH, FIG_HEIGHT), sharey=True, layout="constrained")
     fig.get_layout_engine().set(rect=(0, 0.05, 1, 0.95), w_pad=0.02, wspace=0.03)   # room for the key below
     for k, (noise, sigma) in enumerate(zip(grid["noise_sigma"], grid["noise_sigma_values"])):
-        label = "No noise" if sigma == 0 else str(noise).capitalize()
-        title = f"{label} (σ = {100 * sigma:g}%)"
-        image = panel(axes[k], table[table["noise"] == str(noise)], ffs, depths, norm, title)
+        image = panel(axes[k], table[table["noise"] == str(noise)], ffs, depths, norm, L.noise_title(noise, sigma))
     axes[0].set_ylabel("Fetal fraction", color=MUTED)
     bar = fig.colorbar(image, ax=axes, fraction=0.04, pad=0.02, aspect=30)
     bar.set_label("Sensitivity difference, B − A (points)", color=MUTED)

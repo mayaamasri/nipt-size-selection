@@ -8,8 +8,8 @@ profile, i.e. decision #8's formula with g_eff and r_eff (depth-independent), dr
 breakeven_check.predicted_ratio. Dashed line at 1.
 
 Reads results/tables/robustness_profiles_pred.csv (python -m src.evaluate.robustness_inputs), each profile's
-results_all.csv (results/tables for G1, results/robustness/<NAME>/tables) and robustness_profiles_summary.csv
-(python -m src.evaluate.robustness_profiles, for the caption). Writes results/figures/figS_profiles.png (300 dpi)
+results_all.csv (results/tables for G1, results/robustness/<NAME>/tables) and robustness_profiles_inputs.csv
+(python -m src.evaluate.robustness_inputs; the caption quotes the fetal medians). Writes results/figures/figS4_profiles.png (300 dpi)
 and .pdf. Run from the repo root:
     python -m src.evaluate.figures.figS_profiles
 """
@@ -19,10 +19,11 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 from src.config import load_config, repo_path
+from src.evaluate import labels as L
 from src.evaluate.breakeven_check import predicted_ratio
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, TEXT, new_figure, save_figure, style_axes
 from src.evaluate.figures.fig4_breakeven import DEPTH_RANGE
-from src.evaluate.robustness_profiles import MAIN, POOLED, profiles
+from src.evaluate.robustness_profiles import MAIN, profiles
 
 FIG_FF = 0.04
 NOISE = "realistic"
@@ -30,18 +31,18 @@ FIG_HEIGHT = 4.3                      # in, two rows of three panels
 # method: (label, colour, marker, line style); B and W as in Fig. S3, W_G1 in the maternal slot
 SERIES = {"B": ("B (40–156 bp)", "#123766", "D", "-"),
           "W": ("W (weights from the true profile)", "#eb6834", "o", "--"),
-          "W_G1": ("W_G1 (weights from G1)", "#2a78d6", "s", ":")}
+          "W_G1": (L.method("W_G1"), "#2a78d6", "s", ":")}
 
 CAPTION = (
-    "Figure S4. Gain over A under different fetal length profiles, FF 4%, realistic noise (σ = 0.35%): ratio "
-    "of standardised separations sep(method)/sep(A) for B (40–156 bp), W (weights P(fetal | length) from the "
-    "patients' true profile) and W_G1 (weights from the G1 profile used in the main analysis, as a lab using a "
-    "published profile would; in G1 it equals W). Scenarios shift the fetal length distribution by −10 to +10 "
-    "bp (fetal median {medians}; maternal 172 bp) or blend it 50:50 with the maternal one (fetal median "
+    r"Figure S4. Gain over A under different fetal length profiles, FF 4%, realistic noise ($\sigma = 0.35\%$): "
+    "ratio of standardised separations sep(method)/sep(A) for B (40–156 bp), W (weights "
+    r"$P(\mathrm{{fetal}} \mid \mathrm{{length}})$ from the patients' true profile) and W (G1 weights) (weights from "
+    "G1 (measured), the profile used in the main analysis, as a lab using a published profile would; in G1 "
+    "(measured) it equals W). Scenarios shift the fetal length distribution by −10 to +10 bp (fetal median "
+    "{medians}; maternal 172 bp) or blend it 50:50 with the maternal one (50% maternal blend, fetal median "
     "{blend_median} bp); all groups, including the reference, are simulated from the scenario profile. Points: "
-    "simulation; lines: the unified counting model (Fig. S3) with each method's weights and the scenario's "
-    "true length distributions. Over all 96 conditions per scenario, the model's median |relative error| is "
-    "{b_lo:.1%}–{b_hi:.1%} for B and {wg_lo:.1%}–{wg_hi:.1%} for W_G1. Dashed: method = A."
+    "simulation; lines: the unified counting model (Fig. S3) with each method's weights and the scenario's true "
+    "length distributions. Dashed: method = A."
 )
 
 
@@ -76,27 +77,20 @@ def titles(config):
     inputs = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "robustness_profiles_inputs.csv")
     out = {}
     for r in inputs.itertuples():
-        what = ("main analysis" if r.profile == MAIN else f"blend {100 * r.blend_maternal:g}%" if r.blend_maternal
-                else f"shift {r.shift_bp:+d} bp".replace("-", "−"))
-        out[r.profile] = (f"{r.profile} ({what})", r.fetal_median_bp)
+        out[r.profile] = (L.scenario(r.profile), r.fetal_median_bp)
     return out
 
 
 def caption(config):
-    """Caption with its numbers computed from the inputs and the summary table."""
+    """Caption with the scenario inputs (fetal medians) from robustness_profiles_inputs.csv."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     inputs = pd.read_csv(tables / "robustness_profiles_inputs.csv").set_index("profile")
-    s = pd.read_csv(tables / "robustness_profiles_summary.csv", dtype={"question": str, "depth": str, "noise": str})
-    s = s[(s["question"] == "3") & ~s["profile"].isin([MAIN, POOLED])].set_index(["profile", "item"])["value"]
-    b = s.xs("median_abs_rel_error_B_all", level="item")
-    wg = s.xs("median_abs_rel_error_W_G1_all", level="item")
     shifts = inputs[inputs["blend_maternal"] == 0].sort_values("shift_bp")
     blend = inputs[inputs["blend_maternal"] > 0]
     return CAPTION.format(
         medians=", ".join(f"{m} bp" for m in shifts["fetal_median_bp"]) + f" for shifts of "
                 + ", ".join(f"{v:+d}".replace("-", "−") for v in shifts["shift_bp"]) + " bp",
-        blend_median=int(blend["fetal_median_bp"].iloc[0]),
-        b_lo=b.min(), b_hi=b.max(), wg_lo=wg.min(), wg_hi=wg.max())
+        blend_median=int(blend["fetal_median_bp"].iloc[0]))
 
 
 def main():
@@ -128,7 +122,7 @@ def main():
         t.set_color(TEXT)
     fig.text(0.98, 0.955, "lines: model · points: simulation", color=MUTED, fontsize=MIN_FONT, ha="right",
              va="top")
-    paths = save_figure(fig, config, "figS_profiles", tight_layout=False)
+    paths = save_figure(fig, config, "figS4_profiles", tight_layout=False)
     print("Saved " + ", ".join(str(p) for p in paths))
     print("\nCaption:\n" + caption(config))
 

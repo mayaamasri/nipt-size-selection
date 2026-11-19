@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.text import Text  # noqa: E402
 
 from src.config import repo_path  # noqa: E402
+from src.evaluate.labels import check_text  # noqa: E402
 
 TEXT, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 # Same slots as the QC plots: maternal slot 1, fetal slot 2, pooled/neutral in ink
@@ -81,13 +82,17 @@ def smallest_font(fig):
 def save_figure(fig, config, name, tight_layout=True):
     """Save <name>.png (300 dpi) and <name>.pdf in results/figures/; returns both paths.
 
-    Raises if the figure is wider than FIG_WIDTH or has text below MIN_FONT; prints the final size and the
+    Raises if the figure is wider than FIG_WIDTH, has text below MIN_FONT, or has text with an old identifier or
+    an underscore outside math (labels.check_text, e.g. 'W_G1' instead of 'W (G1 weights)'); prints the final size and the
     smallest text. tight_layout=False for figures whose layout tight_layout cannot handle (e.g. a colorbar
     shared by several axes); they keep their set size and use constrained layout instead.
     """
     width, height = fig.get_size_inches()
     if width > FIG_WIDTH + 1e-9:
         raise ValueError(f"{name}: width {width} in exceeds FIG_WIDTH = {FIG_WIDTH} in")
+    for t in fig.findobj(Text):      # reader labels only: no code identifier, no underscore outside $...$ math
+        if t.get_text().strip():
+            check_text(t.get_text(), f"{name}: figure text")
     small = smallest_font(fig)
     if small < MIN_FONT:
         raise ValueError(f"{name}: text at {small} pt, below MIN_FONT = {MIN_FONT} pt")

@@ -6,7 +6,7 @@ the unified model (Task 06, 6A), which is decision #8's formula with g_eff = E[u
 r_eff = E[u]^2 / E[u^2] (both depth-independent), drawn with breakeven_check.predicted_ratio. Dashed line at 1.
 
 Reads results/tables/unified_model_check.csv and unified_model_summary.csv
-(python -m src.evaluate.unified_model_check). Writes results/figures/figS_unified_model.png (300 dpi) and .pdf.
+(python -m src.evaluate.unified_model_check). Writes results/figures/figS3_unified_model.png (300 dpi) and .pdf.
 Run from the repo root:
     python -m src.evaluate.figures.figS_unified_model
 """
@@ -16,6 +16,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 from src.config import load_config, repo_path
+from src.evaluate import labels as L
 from src.evaluate.breakeven_check import predicted_ratio
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, TEXT, new_figure, save_figure, style_axes
 from src.evaluate.figures.fig4_breakeven import DEPTH_RANGE, FIG_HEIGHT
@@ -26,17 +27,12 @@ SERIES = {"B": ("B (40–156 bp)", "#123766", "D", "-"), "W": ("W (weights P(fet
 
 CAPTION = (
     "Figure S3. One counting model for size selection and length weighting, FF 4%: ratio of standardised "
-    "separations sep(method)/sep(A) for B (40–156 bp) and W (each fragment weighted by P(fetal | length) at the "
-    "true FF). Points: simulation; lines: the unified model, in which every z-score method is a chr21 fraction "
-    "with length weights u(l), and the break-even formula (decision #8) holds with an effective enrichment "
-    "g_eff = E[u·w*]/(FF·E[u]) and an effective read fraction r_eff = E[u]²/E[u²]. Dashed: method = A. Over all "
-    "96 conditions, the median |relative error| is {w_med:.2%} for W (95th percentile {w_p95:.1%}), "
-    "{wf_med:.2%} for W_fixedFF and {b_med:.2%} for B and the seven fixed cutoffs together; without the "
-    "{n_low} conditions where A's separation is below 1, {w_med_clean:.2%}, {wf_med_clean:.2%} and "
-    "{b_med_clean:.2%} (unified_model_summary.csv). At realistic noise, W's predicted ratio rises from "
-    "{w_lo:.2f} at 1M to {w_hi:.2f} at 10M; the best possible linear weights for that noise would reach "
-    "{opt_hi:.2f} at 10M, so W achieves {eff_hi:.0%} of the optimum there (and 100% without extra noise). "
-    "Like W, the model uses the true length distributions."
+    "separations sep(method)/sep(A) for B (40–156 bp) and W (each fragment weighted by "
+    r"$P(\mathrm{fetal} \mid \mathrm{length})$ at the true FF). Points: simulation; lines: the unified model, in "
+    "which every z-score method is a chr21 fraction with length weights $u(l)$, and the break-even formula (see "
+    r"Methods) holds with an effective enrichment $g_\mathrm{eff} = E[u w^*]/(\mathrm{FF}\cdot E[u])$ and an "
+    r"effective read fraction $r_\mathrm{eff} = E[u]^2/E[u^2]$. Dashed: method = A. Like W, the model uses the "
+    "true length distributions."
 )
 
 
@@ -63,22 +59,8 @@ def load(config):
 
 
 def caption(config):
-    """Caption with its numbers computed from unified_model_check.csv and unified_model_summary.csv."""
-    table, summary = load(config)
-    overall = summary[summary["group"] == "overall"].set_index(["family", "rows"])
-    realistic = config["grid"]["noise_sigma"][-1]
-    w = table[(table["method"] == "W") & np.isclose(table["ff"], FIG_FF) & (table["noise"] == str(realistic))]
-    w = w.set_index("depth")
-    depths = config["grid"]["depth"]
-    n_low = int(overall.loc[("W", "all"), "n"] - overall.loc[("W", "without_low_signal"), "n"])
-    return CAPTION.format(
-        w_med=overall.loc[("W", "all"), "rel_median"], w_p95=overall.loc[("W", "all"), "rel_p95"],
-        wf_med=overall.loc[("W_fixedFF", "all"), "rel_median"], b_med=overall.loc[("B", "all"), "rel_median"],
-        n_low=n_low, w_med_clean=overall.loc[("W", "without_low_signal"), "rel_median"],
-        wf_med_clean=overall.loc[("W_fixedFF", "without_low_signal"), "rel_median"],
-        b_med_clean=overall.loc[("B", "without_low_signal"), "rel_median"],
-        w_lo=w.loc[min(depths), "ratio_pred"], w_hi=w.loc[max(depths), "ratio_pred"],
-        opt_hi=w.loc[max(depths), "ratio_pred_opt"], eff_hi=w.loc[max(depths), "w_efficiency"])
+    """Caption (describes what is shown; model errors are in unified_model_summary.csv)."""
+    return CAPTION
 
 
 def main():
@@ -90,8 +72,7 @@ def main():
     fig, axes = new_figure(1, 3, figsize=(FIG_WIDTH, FIG_HEIGHT), sharey=True, layout="constrained")
     fig.get_layout_engine().set(rect=(0, 0, 1, 0.88), wspace=0.04)    # room for the legend above
     for ax, noise, sigma in zip(axes, grid["noise_sigma"], grid["noise_sigma_values"]):
-        label = "No noise" if sigma == 0 else str(noise).capitalize()
-        panel(ax, data[data["noise"] == str(noise)], sigma, f"{label} (σ = {100 * sigma:g}%)")
+        panel(ax, data[data["noise"] == str(noise)], sigma, L.noise_title(noise, sigma))
     axes[0].set_ylabel("sep(method) / sep(A)", color=MUTED)
     axes[0].set_ylim(0.9, 1.65)
 
@@ -103,7 +84,7 @@ def main():
         t.set_color(TEXT)
     fig.text(0.98, 0.985, "lines: model · points: simulation", color=MUTED, fontsize=MIN_FONT, ha="right",
              va="top")
-    paths = save_figure(fig, config, "figS_unified_model", tight_layout=False)
+    paths = save_figure(fig, config, "figS3_unified_model", tight_layout=False)
     print("Saved " + ", ".join(str(p) for p in paths))
     print("\nCaption:\n" + caption(config))
 

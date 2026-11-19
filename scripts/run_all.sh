@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Task 05: run the whole study, in order, from a fresh clone.
+# Tasks 05-10: run the whole study, in order, from a fresh clone.
 #
 # Before: conda env create -f environment.yml (or environment.lock.yml); conda activate nipt;
 #         bash scripts/download_reference.sh   (GRCh38 analysis set + Bowtie2 index, ~5 GB)
@@ -7,8 +7,10 @@
 #                     bash scripts/run_all.sh --skip-pool   (use an existing data/processed/pool as is)
 #                     bash scripts/run_all.sh --robustness  (also rerun the Task 07 and 08 robustness scenarios)
 #
-# Expected run times (measured on an Apple-silicon MacBook, macOS 26, nipt env) are noted per step;
-# total ~45 min from scratch, ~13 min when the pool already exists (measured: 793 s). Every step is deterministic (seeds
+# Order: simulation inputs -> main grid and its evaluation -> 14-point limit grid -> robustness scenarios
+# (Tasks 07, 08) -> detection-limit CIs (Task 09) -> figures -> tables, LaTeX tables, numbers sheet, captions ->
+# rerun check. Expected run times (measured on an Apple-silicon MacBook, macOS 26, nipt env) are noted per step;
+# without --robustness ~1 h from scratch (32 min of it is the pool); with --robustness ~2.5-3 h. Every step is deterministic (seeds
 # in config/config.yaml), so a rerun reproduces the committed results/ files. Steps that already have
 # their output are not skipped, except pool chunks (pool.py skips chunks whose Parquet exists).
 set -euo pipefail
@@ -113,32 +115,34 @@ step "unified model check" python -m src.evaluate.unified_model_check
 # Paired bootstrap of the observed ratio sep(B_c)/sep(A) on 4 conditions (Fig. 4 caption): ~5 s
 step "bootstrap ratio" python -m src.evaluate.bootstrap_ratio
 
-# --- 4. Figures and tables (results/figures, results/tables): seconds each -----------------------
-step "Figure 2" python -m src.evaluate.figures.fig2_inputs
-step "Figure 3" python -m src.evaluate.figures.fig3_b_minus_a
-step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
-step "Figure 5 + supplementary" python -m src.evaluate.figures.fig5_methods
-step "Figure S3 (unified model)" python -m src.evaluate.figures.figS_unified_model
-# Tables 1, 2 + supplementary: after the 14-point detection limits (section 4d), since Table 1 and Table S4 use them
+# --- 4. Main-grid detection limits on the 14-point FF grid (Task 09 follow-up, decision #19) ----------------
+# Every evaluation.limit_extra_ff (1.5, 2.5, 3.5, 5, 7, 9%) at every depth x noise setting: 72 conditions in
+# results/refined_grid (seeds family 7), then the 9C check (only its own 16 conditions), the 14-point limits and
+# the dip flags. Sequential ~4 min (72 x ~3.3 s); without --robustness, conditions already there are reused.
+if [ "$ROBUSTNESS" = 1 ]; then
+  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings --rerun
+else
+  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings
+fi
+step "14-point detection limits" python -m src.evaluate.detection_limits_refined
 
-# --- 4b. Robustness to the fetal length profile (Task 07, decision #17) ---------------------------
+# --- 5a. Robustness to the fetal length profile (Task 07, decision #17); 8-point grid ----------------------
 # Scenario inputs and the model's predictions (7A, 7C), no simulation: seconds
 step "robustness inputs and predictions" python -m src.evaluate.robustness_inputs
 # Optional (--robustness): the full grid and its evaluation for each scenario in robustness.fetal_profiles,
 # written to results/robustness/<NAME>/tables. Sequential time per scenario ~13 min (grid ~5.5 min, bootstrap
-# ~7.5 min, the rest seconds), ~65 min for all five here. The scenarios write to separate folders and do not
-# depend on each other, so they can also run in parallel (one job per scenario: ~14 min wall time for all five
-# on a 10-core Mac). Without --robustness the committed scenario tables are used as they are.
+# ~7.5 min, the rest seconds), ~65 min for all five. The scenarios write to separate folders and do not depend on
+# each other, so they can also run in parallel (one job per scenario: ~14 min wall time for all five on a
+# 10-core Mac). Without --robustness the committed scenario tables are used as they are.
 if [ "$ROBUSTNESS" = 1 ]; then
   for sc in $(scenarios fetal_profiles); do run_scenario "$sc"; done
 else
   echo "==> fetal-profile scenarios: skipped (no --robustness), using results/robustness as is"
 fi
-# Summary across scenarios (questions 1-7) and Fig. S4: seconds
+# Summary across scenarios (questions 1-7): seconds
 step "robustness summary" python -m src.evaluate.robustness_profiles
-step "Figure S4 (fetal profiles)" python -m src.evaluate.figures.figS_profiles
 
-# --- 4c. Extra noise on size-selected fragments (Task 08, decision #18) ---------------------------
+# --- 5b. Extra noise on size-selected fragments (Task 08, decision #18); 8-point grid ----------------------
 # Predictions with sigma_u, noise QC on the reference normals, and the Budis illustration (8C, 8F): ~2 s
 step "short-noise inputs, QC and Budis illustration" python -m src.evaluate.robustness_snoise_inputs
 # Optional (--robustness): grid and evaluation per short-noise scenario (k = 1.5, 2), low and realistic noise
@@ -149,41 +153,42 @@ if [ "$ROBUSTNESS" = 1 ]; then
 else
   echo "==> short-noise scenarios: skipped (no --robustness), using results/robustness as is"
 fi
-# Summary across k (questions 1-6) and Fig. S5: seconds
+# Summary across k (questions 1-6), and the four regimes per cutoff, FF and k (Table S10, model only): seconds
 step "short-noise summary" python -m src.evaluate.robustness_snoise
-step "Figure S5 (short-fragment noise)" python -m src.evaluate.figures.figS_short_noise
-# --- 4d. Uncertainty of the detection limits (Task 09, decision #19) ------------------------------
-# Paired bootstrap (1,000 resamples) of the limits and of method differences, main grid (12 settings, both versions)
-# and shift_p10 / blend50 (test+ref). Two versions:
+step "short-noise regimes" python -m src.evaluate.snoise_regimes
+
+# --- 6. Uncertainty of the detection limits (Task 09, decision #19) ----------------------------------------
+# Paired bootstrap (1,000 resamples) of the limits and of method differences. Two versions:
 #   test      test normals and T21 resampled; reference, trained trees, tree thresholds and B-opt's cutoff fixed
 #   test+ref  the 2,000 reference normals resampled too (new mean and SD); z-score methods only
-# Per-patient statistics and tree scores are cached under data/processed/limit_ci_cache (~190 MB, first run
-# ~6 min to build) and checked against results_all.csv before use. Sequential time ~30 min (one setting ~70 s);
-# measured 335 s with --jobs 6 on a 10-core Mac once the caches exist. Runs after the robustness blocks
-# because it reads the shift_p10 and blend50 tables.
-step "detection-limit CIs" python -u -m src.evaluate.limit_ci --jobs 6
-# Refined FF grid (9C): 16 extra conditions (midpoint FFs, seeds family 7) where 9B pairs differ by < 0.2 points,
-# written to results/refined_grid; conditions already there are reused, rerun with --robustness: ~35 s
-# Main-grid detection limits on the 14-point FF grid (Task 09 follow-up, decision #19): every
-# evaluation.limit_extra_ff (1.5, 2.5, 3.5, 5, 7, 9%) at every depth x noise setting, 72 conditions in
-# results/refined_grid (seeds family 7; the 16 9C conditions are reused). Conditions already there are reused;
-# with --robustness all are rerun. Sequential ~4 min for the 72 (~3 min for the 56 not in 9C), then seconds for
-# the 9C analysis (only its own 16 conditions) and for the limits and dip flags.
-if [ "$ROBUSTNESS" = 1 ]; then
-  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings --rerun
-else
-  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings
-fi
-step "14-point detection limits" python -m src.evaluate.detection_limits_refined
-# Bootstrap CIs on the 14-point grid (main grid, both versions; the 8 grid FFs keep the resamples above):
-# sequential ~25 min, ~5 min with --jobs 6 (extra caches ~3 min on the first run)
+# 8-point grid: main grid (12 settings, both versions) and shift_p10 / blend50 (test+ref); it reads the scenario
+# tables, so it runs after section 5. Sequential ~30 min (one setting ~70 s); measured 335 s with --jobs 6 on a
+# 10-core Mac once the caches exist (data/processed/limit_ci_cache, ~250 MB, ~6 min to build on the first run).
+step "detection-limit CIs, 8-point grid" python -u -m src.evaluate.limit_ci --jobs 6
+# 14-point grid (main grid, both versions; the 8 grid FFs keep the resamples above), plus the Table 2 bold-rule
+# pairs (lowest method vs every other): sequential ~25 min, ~4 min with --jobs 6 (extra caches ~3 min first time)
 step "detection-limit CIs, 14-point grid" python -u -m src.evaluate.limit_ci --refined --jobs 6
-step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
 
-# All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
+# --- 7. Figures (results/figures): seconds each -------------------------------------------------------------
+step "Figure 2" python -m src.evaluate.figures.fig2_inputs
+step "Figure 3" python -m src.evaluate.figures.fig3_b_minus_a
+step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
+step "Figure 5 + Figs. S1, S2" python -m src.evaluate.figures.fig5_methods
+step "Figure S3 (unified model)" python -m src.evaluate.figures.figS_unified_model
+step "Figure S4 (fetal profiles)" python -m src.evaluate.figures.figS_profiles
+step "Figure S5 (short-fragment noise)" python -m src.evaluate.figures.figS_short_noise
+
+# --- 8. Tables, LaTeX tables, numbers sheet and captions: seconds each ------------------------------------
+# Tables 1, 2 and S1-S10 as CSV (manuscript numbering), then the same as LaTeX (results/tables/latex), the numbers
+# sheet for the text (docs/revision_numbers.md), all captions (docs/captions.md) and Additional file 1
+# (supplement/additional_file_1.tex; compile it with: cd supplement && tectonic additional_file_1.tex)
+step "Tables 1, 2 + S1-S10" python -m src.evaluate.tables
+step "LaTeX tables" python -m src.evaluate.latex_tables
+step "numbers sheet" python -m src.evaluate.revision_numbers
 step "captions" python -m src.evaluate.captions
+step "Additional file 1 (LaTeX)" python -m src.evaluate.additional_file
 
-# --- 5. Reproducibility check: rerun one condition and compare with its saved rows: ~3 s ---------
+# --- 9. Reproducibility check: rerun one condition and compare with its saved rows: ~3 s -------------------
 step "rerun check" python -m src.evaluate.check_rerun
 
 echo "All steps finished in $SECONDS s."

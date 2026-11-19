@@ -2,15 +2,15 @@
 
 sens_at_fpr against FF, one panel per depth (2 x 2), for A, B, W, C1, C2. Main figure at realistic noise;
 the same figure at no and low noise as supplementary. Tree points whose own calibrated threshold flags
-nobody (nobody_positive) have hollow markers. Light reference lines: 95% (detection-limit target, Table 1)
+nobody (nobody_positive) have hollow markers. Light reference lines: 95% (detection-limit target, Table 2)
 and FF 4% (commercial minimum).
 
 Colours: the house categorical order with violet in place of yellow (validated with the dataviz palette
 validator, light mode: all checks pass; aqua and magenta are below 3:1 contrast on the surface, so every
 series also has its own marker with a dark edge and a line style, z-score methods solid, trees dashed).
 
-Reads results/tables/results_all.csv (and detection_limits.csv, fig3_b_minus_a.csv for the caption). Writes results/figures/fig5_methods.{png,pdf} (realistic) and
-figS_methods_none.{png,pdf}, figS_methods_low.{png,pdf}. Run from the repo root:
+Reads results/tables/results_all.csv. Writes results/figures/fig5_methods.{png,pdf} (realistic) and
+figS1_methods_none.{png,pdf}, figS2_methods_low.{png,pdf}. Run from the repo root:
     python -m src.evaluate.figures.fig5_methods
 """
 
@@ -38,19 +38,13 @@ CAPTION_MAIN = (
     "Figure 5. Sensitivity at FPR 0.135% (read from the test ROC) against fetal fraction for all fragments "
     "(A), size selection 40–156 bp (B), length-weighted z-score (W) and the decision trees on the count "
     "z-score (C1) and on the count, short-fragment and length-weighted z-scores (C2), at realistic noise "
-    "(σ = 0.35%); one panel per depth. Sensitivity at a common FPR compares how well each method ranks "
-    "patients. Hollow markers: the tree's "
-    "own trained threshold flags nobody in that condition (all at FF ≤ 6%); its actual sensitivity there is "
-    "0%, which is what the detection limits in Table 1 use. C1 falls below A although it uses only A's z-score: a "
-    "shallow tree has few distinct scores, so its ROC is coarse and the interpolated sensitivity is lower. "
-    "W uses the true FF in its weights; W with the weights fixed at FF {fixed_ff:.0%} in every condition gives "
-    "almost identical results (sensitivity at FPR 0.135% within {wfix_max:.0f} points, mean difference {wfix_mean:+.1f}; "
-    "detection limits within {wfix_dl:.1f} percentage points of FF), so this is not a real limitation. "
-    "Dashed grey: 95% (detection-limit target); dotted grey: FF 4% (commercial minimum). The sampling SE of a "
-    "difference in sensitivity at FPR 0.135% between two methods is {se_lo:.1f}–{se_hi:.1f} points (paired bootstrap of "
-    "B − A, Fig. 3), largest on the steep part of the curves."
+    r"($\sigma = 0.35\%$); one panel per depth; 10,000 euploid and 2,000 trisomic test patients per condition. "
+    "Hollow markers: the tree's own trained threshold flags nobody in that condition; its actual sensitivity "
+    "there is 0%, which is what the detection limits in Table 2 use. W uses the true FF in its weights; W (FF "
+    "{fixed_ff:.0%}), with the weights fixed at FF {fixed_ff:.0%}, is compared in Tables S3 and S4. Dashed grey: "
+    "95% (detection-limit target); dotted grey: FF 4% (commercial minimum)."
 )
-CAPTION_SUPP = "Figure {label}. As Fig. 5, at {noise} noise (σ = {sigma:g}%)."
+CAPTION_SUPP = "Figure {label}. As Fig. 5, at {noise} noise ($\\sigma = {sigma:g}\\%$)."
 
 
 def panel(ax, data, depth, ffs):
@@ -103,23 +97,12 @@ def make_figure(config, results, noise, name):
 
 
 def captions(config):
-    """{figure name: caption}, with the W vs W_fixedFF numbers computed from the results."""
-    tables = repo_path(config["paths"]["results"]) / "tables"
-    results = pd.read_csv(tables / "results_all.csv")
+    """{figure name: caption} (they describe what is shown; the W vs W_fixedFF numbers are in Tables S3, S4)."""
     grid = config["grid"]
     sigma = dict(zip(grid["noise_sigma"], grid["noise_sigma_values"]))
-    w = results[results["method"] == "W"].set_index(["ff", "depth", "noise"])
-    wf = results[results["method"] == "W_fixedFF"].set_index(["ff", "depth", "noise"])
-    diff = 100 * (wf["sens_at_fpr"] - w["sens_at_fpr"])
-    limits = pd.read_csv(tables / "detection_limits.csv")
-    lim = limits[limits["method"].isin(["W", "W_fixedFF"])].pivot_table(index=["depth", "noise"], columns="method",
-                                                                         values="ff_limit")
-    boot = pd.read_csv(tables / "fig3_b_minus_a.csv")
-    se = 100 * boot.loc[~boot["saturated"], "se"]
-    out = {"fig5_methods": CAPTION_MAIN.format(fixed_ff=config["methods"]["weight_fixed_ff"], se_lo=se.min(), se_hi=se.max(), wfix_max=np.ceil(diff.abs().max()), wfix_mean=diff.mean(),
-                                               wfix_dl=100 * (lim["W"] - lim["W_fixedFF"]).abs().max())}
+    out = {"fig5_methods": CAPTION_MAIN.format(fixed_ff=config["methods"]["weight_fixed_ff"])}
     for k, noise in enumerate([n for n in grid["noise_sigma"] if n != MAIN_NOISE], start=1):
-        out[f"figS_methods_{noise}"] = CAPTION_SUPP.format(label=f"S{k}", noise="no" if sigma[noise] == 0 else noise,
+        out[f"figS{k}_methods_{noise}"] = CAPTION_SUPP.format(label=f"S{k}", noise="no" if sigma[noise] == 0 else noise,
                                                            sigma=100 * sigma[noise])
     return out
 
@@ -130,8 +113,8 @@ def main():
     grid = config["grid"]
 
     paths = make_figure(config, results, MAIN_NOISE, "fig5_methods")
-    for noise in [n for n in grid["noise_sigma"] if n != MAIN_NOISE]:
-        paths += make_figure(config, results, noise, f"figS_methods_{noise}")
+    for k, noise in enumerate([n for n in grid["noise_sigma"] if n != MAIN_NOISE], start=1):
+        paths += make_figure(config, results, noise, f"figS{k}_methods_{noise}")
     print("Saved " + ", ".join(str(p) for p in paths))
     for name, text in captions(config).items():
         print(f"\nCaption ({name}):\n{text}")

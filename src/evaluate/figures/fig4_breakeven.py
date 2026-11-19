@@ -6,7 +6,7 @@ ratio(N) = g sqrt((1/(p0 N) + sigma^2) / (1/(p0 r N) + sigma^2)) with that cutof
 Dashed line at 1 (B = A); predicted break-even depths N* inside the plotted range are marked on it.
 
 Reads results/tables/breakeven_check.csv, breakeven_summary.csv (python -m src.evaluate.breakeven_check) and
-breakeven_ratio_noise.csv (python -m src.evaluate.bootstrap_ratio, for the caption).
+breakeven_ratio_noise.csv (python -m src.evaluate.bootstrap_ratio, quoted in docs/revision_numbers.md).
 Writes results/figures/fig4_breakeven.png (300 dpi) and .pdf. Run from the repo root:
     python -m src.evaluate.figures.fig4_breakeven
 """
@@ -16,6 +16,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 from src.config import load_config, repo_path
+from src.evaluate import labels as L
 from src.evaluate.breakeven_check import predicted_ratio
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, TEXT, new_figure, save_figure, style_axes
 
@@ -29,16 +30,10 @@ SERIES = {130: ("#5a8fd3", "o", ":"), 140: ("#2f6fc0", "s", "-."), 150: ("#1f539
 
 CAPTION = (
     "Figure 4. Observed and predicted gain of size selection at FF 4%: ratio of standardised separations "
-    "sep(B at upper cutoff c)/sep(A), sep = (mean z of T21 − mean z of normals)/SD of normals, for c = 130, 140, 150 "
-    "and 156 bp (B). Points: simulation; lines: break-even formula (decision #8) with the exact g and r of each "
-    "cutoff at FF 4% and p0 = q(chr21). Dashed: B = A. Without extra noise the ratio is g·√r at every depth "
-    "(Fig. 2e); noise lifts it towards g as depth grows, so strict cutoffs that lose at low depth win at high "
-    "depth. Predicted break-even depths: {nstar_text}. Over all {n_all} FF × depth × noise × cutoff "
-    "combinations (breakeven_check.csv), the median |relative error| is {rel_med_all:.1%} (95th percentile "
-    "{rel_p95_all:.1%}); without the {n_low} combinations where A's separation is below 1, {rel_med:.1%} "
-    "({rel_p95:.1%}). A paired bootstrap of the test patients gives a sampling SD of the observed ratio of "
-    "{sd_lo:.1f}–{sd_hi:.1f}% (breakeven_ratio_noise.csv), so the typical error is within sampling noise. The mean signed error is {bias:+.1%} "
-    "(t = {bias_t:.1f}), with no trend across FF or depth."
+    "sep(B 40–$c$)/sep(A), sep = (mean $z$ of T21 − mean $z$ of normals)/SD of normals, for $c$ = 130, 140, 150 "
+    "and 156 bp (B). Points: simulation; lines: break-even formula (see Methods) with the exact $g$ and $r$ of each "
+    r"cutoff at FF 4% and $p_0 = q(\mathrm{chr21})$. Dashed: B = A; $N^*$: predicted break-even depth, where a line "
+    "crosses B = A."
 )
 
 
@@ -63,7 +58,7 @@ def panel(ax, data, sigma, title):
             marks.append((cutoff, n))
             if DEPTH_RANGE[0] <= n <= DEPTH_RANGE[1]:
                 ax.plot([n, n], [0.97, 1.03], color=TEXT, linewidth=0.8)
-                ax.text(n, 0.955, f"N* {nstar_label(n)}\n({cutoff} bp)", color=TEXT, fontsize=MIN_FONT,
+                ax.text(n, 0.955, f"N* {nstar_label(n)}\n({L.cutoff(cutoff)})", color=TEXT, fontsize=MIN_FONT,
                         ha="center", va="top")
     ax.set_xscale("log")
     ax.set_xlim(*DEPTH_RANGE)
@@ -74,35 +69,9 @@ def panel(ax, data, sigma, title):
 
 
 def caption(config):
-    """Caption with its numbers computed from breakeven_check.csv and breakeven_summary.csv."""
-    tables = repo_path(config["paths"]["results"]) / "tables"
-    table = pd.read_csv(tables / "breakeven_check.csv")
-    summary = pd.read_csv(tables / "breakeven_summary.csv")
-    data = table[np.isclose(table["ff"], FIG_FF) & table["cutoff"].isin(CUTOFFS)]
-    grid = config["grid"]
-    nstar, never = [], []
-    for noise, sigma in zip(grid["noise_sigma"], grid["noise_sigma_values"]):
-        label = "No noise" if sigma == 0 else str(noise).capitalize()
-        for cutoff in CUTOFFS:
-            n = data[(data["noise"] == str(noise)) & (data["cutoff"] == cutoff)]["breakeven_depth"].iloc[0]
-            if np.isfinite(n):
-                nstar.append(f"{cutoff} bp at {label.lower()} noise, {nstar_label(n)}")
-    for cutoff in CUTOFFS:
-        if (data.loc[data["cutoff"] == cutoff, "g2r"] >= 1).all():
-            never.append(str(cutoff))
-    never_text = f"; none for {' and '.join(never)} bp (g²r ≥ 1)" if never else ""
-    row = summary[summary["group"] == "overall"].set_index(["value", "rows"])
-    sd_rel = 100 * pd.read_csv(tables / "breakeven_ratio_noise.csv")["boot_sd_rel"]
-    return CAPTION.format(
-        sd_lo=sd_rel.min(), sd_hi=sd_rel.max(),
-        nstar_text="; ".join(nstar) + never_text,
-        n_all=int(row.loc[("all", "all"), "n"]), n_low=int(row.loc[("all", "all"), "n"]
-                                                          - row.loc[("all", "without_low_signal"), "n"]),
-        rel_med_all=row.loc[("all", "all"), "rel_median"], rel_p95_all=row.loc[("all", "all"), "rel_p95"],
-        rel_med=row.loc[("all", "without_low_signal"), "rel_median"],
-        rel_p95=row.loc[("all", "without_low_signal"), "rel_p95"],
-        bias=row.loc[("all", "without_low_signal"), "rel_mean_signed"],
-        bias_t=row.loc[("all", "without_low_signal"), "rel_mean_t"])
+    """Caption (describes what is shown; break-even depths and prediction errors are in breakeven_check.csv and
+    breakeven_summary.csv)."""
+    return CAPTION
 
 
 def main():
@@ -114,13 +83,12 @@ def main():
     fig, axes = new_figure(1, 3, figsize=(FIG_WIDTH, FIG_HEIGHT), sharey=True, layout="constrained")
     fig.get_layout_engine().set(rect=(0, 0, 1, 0.88), wspace=0.04)    # room for the legend above
     for ax, noise, sigma in zip(axes, grid["noise_sigma"], grid["noise_sigma_values"]):
-        label = "No noise" if sigma == 0 else str(noise).capitalize()
-        panel(ax, data[data["noise"] == str(noise)], sigma, f"{label} (σ = {100 * sigma:g}%)")
+        panel(ax, data[data["noise"] == str(noise)], sigma, L.noise_title(noise, sigma))
     axes[0].set_ylabel("sep(B) / sep(A)", color=MUTED)
     axes[0].set_ylim(0.7, 1.65)
 
     handles = [Line2D([], [], color=SERIES[c][0], marker=SERIES[c][1], linestyle=SERIES[c][2], markersize=3.5,
-                      markeredgecolor=TEXT, markeredgewidth=0.4, label=f"{c} bp" + (" (B)" if c == 156 else ""))
+                      markeredgecolor=TEXT, markeredgewidth=0.4, label=L.cutoff(c))
                for c in CUTOFFS]
     legend = fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0), ncol=4, frameon=False,
                         handlelength=2.6, columnspacing=1.2)

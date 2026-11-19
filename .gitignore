@@ -37,6 +37,7 @@ Thumbs.db
 .idea/
 
 # ---- Manuscript build artifacts (if using LaTeX locally) ----
+supplement/*.pdf
 *.aux
 *.log
 *.out

@@ -35,16 +35,11 @@ SHADE = "#f1f1ef"                   # LABEL_BOX face inside the shaded "B worse"
 CAPTION = (
     "Figure 2. Inputs of the simulation. (a) Maternal and fetal fragment-length distributions after the "
     "mappability filter (Rabinowitz G1 lengths × survival); shaded: the 40–156 bp window of Yang et al. "
-    "(b) Survival (proper pair, both mates MAPQ ≥ 40) in 10 bp bins with Wilson 95% CI; the simulation uses "
-    "the pooled value for both origins, and the maternal and fetal curves show that origin does not change "
-    "survival within a bin (y-axis starts at {s_axis_min:g}%). (c–e) Exact values for windows 40–c bp at FF 4%, against "
-    "the upper cutoff c (dotted: Yang's {yang} bp): (c) FF enrichment g, which peaks at {g_peak_bp} bp "
-    "(g = {g_peak:.2f}; {g_yang:.2f} at {yang} bp); (d) fraction of fragments kept r ({r_yang:.1%} at {yang} bp); "
-    "(e) g·√r, the ratio of B's to A's "
-    "standardised separation without extra noise (decision #8). Below the dashed line at 1 (cutoffs under "
-    "{cross_bp} bp) size selection stops paying off when counting noise is the only noise; it peaks at "
-    "{gain_peak_bp} bp ({gain_peak:.2f}). "
-    "With extra noise the ratio moves towards g; Fig. 4 compares the full prediction with the simulation."
+    "(b) Survival (proper pair, both mates MAPQ ≥ 40) in 10 bp bins with Wilson 95% CI, for maternal and fetal "
+    "fragments; the simulation uses the pooled value for both origins (y-axis starts at {s_axis_min:g}%). "
+    "(c–e) Exact values for windows 40–$c$ bp at FF 4%, against the upper cutoff $c$ (dotted: Yang's {yang} bp): "
+    r"(c) FF enrichment $g$; (d) fraction of fragments kept $r$; (e) $g\sqrt{{r}}$, the ratio of B's to A's "
+    "standardised separation without extra noise (see Methods); dashed: 1 (B = A)."
 )
 
 
@@ -137,15 +132,9 @@ def cutoff_panels(axes, matrices, window, opt_grid):
 
 
 def caption(config):
-    """Caption with its numbers computed from the length/mappability model."""
+    """Caption (describes what is shown; the numbers it used to quote are in docs/revision_numbers.md)."""
     window = config["methods"]["size_selection_window_bp"]
-    g, r = exact_g_r(origin_matrices(config), FIG_FF, UPPER, window[0])
-    gain = g * np.sqrt(r)
-    i_yang = int(np.flatnonzero(UPPER == window[1])[0])
-    i_g, i_gain = int(np.argmax(g)), int(np.argmax(gain))
-    return CAPTION.format(s_axis_min=S_AXIS[0], yang=window[1], g_peak_bp=UPPER[i_g], g_peak=g[i_g],
-                          g_yang=g[i_yang], r_yang=r[i_yang], cross_bp=UPPER[int(np.flatnonzero(gain >= 1)[0])],
-                          gain_peak_bp=UPPER[i_gain], gain_peak=gain[i_gain])
+    return CAPTION.format(s_axis_min=S_AXIS[0], yang=window[1])
 
 
 def main():

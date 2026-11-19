@@ -82,6 +82,11 @@ bash scripts/download_reference.sh
 python scripts/check_env.py
 ```
 
+The Methods' 10k-fragment mapping check (every simulated read re-fetched from the reference with an independent
+reverse complement, including the overlapping-reads case at short lengths) is
+`python -m src.simulate.check_fragments --out-prefix data/processed/task01/sim10k`; it is a one-off validation of
+the fragment simulator and is not part of `run_all.sh`.
+
 ## Reproduce all results
 
 ```bash
@@ -89,12 +94,18 @@ bash scripts/run_all.sh
 ```
 
 Runs every step in order: length QC → mappability pool → mappability table → patient and noise QC → full
-96-condition grid → detection limits and FPR check → bootstrap → break-even check → figures → tables →
-rerun check. About 45 min from scratch on an Apple-silicon MacBook (32 min of it is the pool), about
-13 min if the pool already exists. Expected run times are noted per step in the script. Everything is
-seeded from `config/config.yaml`, so a rerun reproduces the committed files in `results/` byte for byte;
-the only files that change are `tables/run_log.csv` (commit and time of each run) and the timing line of
-`tables/patients_qc.csv`. The pool step was checked on one chunk: chunk 0 (1M fragments), regenerated and
+96-condition grid → detection limits, FPR check, bootstrap, break-even and unified-model checks → the 14-point
+detection-limit grid → robustness scenarios (Tasks 07, 08) → detection-limit CIs (Task 09) → figures → tables,
+LaTeX tables, numbers sheet and captions → rerun check. About 1 h from scratch on an Apple-silicon MacBook
+(32 min of it is the pool); `bash scripts/run_all.sh --robustness` also reruns the 7 robustness scenarios
+(~2.5–3 h in all). Expected run times are noted per step in the script. Everything is seeded from
+`config/config.yaml`, so a rerun reproduces the committed files in `results/` byte for byte; the only files that
+change are the `run_log.csv` files (commit, time and dirty flag of each run) and the timing line of
+`tables/patients_qc.csv`.
+
+**Two FF grids.** The simulated grid has 8 FFs (1, 2, 3, 4, 6, 8, 10, 15%): per-condition results, Figs. 3–5 and
+all robustness-scenario limits use it. Every main-grid detection limit in the paper (Table 2, Tables S4, S6–S8)
+uses a 14-point grid that adds 1.5, 2.5, 3.5, 5, 7 and 9% (decision #19; `results/refined_grid`). The pool step was checked on one chunk: chunk 0 (1M fragments), regenerated and
 remapped from scratch in a separate folder, matched the committed run's chunk exactly (137 s).
 
 To check that one condition reproduces its saved rows exactly (a few seconds):
@@ -155,8 +166,8 @@ its CIs are lumpy (the limit jumps when the number of resampled normals in the t
 A tree pair is therefore never called clear from the `sens` basis alone. A difference gets a CI only if both
 limits are numeric in at least 95% of resamples. Seeds: family 5 (test and reference streams per setting).
 
-**14-point limit grid (decision #19).** The main grid's detection limits in the paper (Table 1 and its
-conservative and sens_at_fpr columns, Table S4) use a 14-point FF grid: the 8 grid FFs plus
+**14-point limit grid (decision #19).** The main grid's detection limits in the paper (Table 2, Tables S4 and
+S6–S8) use a 14-point FF grid: the 8 grid FFs plus
 `evaluation.limit_extra_ff` (1.5, 2.5, 3.5, 5, 7, 9%), each simulated at every depth × noise setting
 (`python -m src.evaluate.refined_grid --all-settings`, 72 conditions in `results/refined_grid`, seeds family 7).
 `python -m src.evaluate.detection_limits_refined` writes `detection_limits_refined.csv` and `limits_dip_flags.csv`
@@ -176,12 +187,12 @@ and recomputes those limits on the refined grid.
 | `figures/fig2_inputs` | `src/evaluate/figures/fig2_inputs.py` | length distributions after mappability, S(l), exact g, r and g·√r against the cutoff |
 | `figures/fig3_b_minus_a` | `src/evaluate/figures/fig3_b_minus_a.py` | sens_at_fpr(B) − sens_at_fpr(A) heatmaps (from `tables/fig3_b_minus_a.csv`) |
 | `figures/fig4_breakeven` | `src/evaluate/figures/fig4_breakeven.py` | break-even formula vs simulation at FF 4% (from `tables/breakeven_check.csv`) |
-| `figures/fig5_methods`, `figS_methods_none`, `figS_methods_low` | `src/evaluate/figures/fig5_methods.py` | sensitivity at FPR 0.135% by method, realistic / no / low noise |
-| `figures/figS_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
-| `figures/figS_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
-| `figures/figS_short_noise` | `src/evaluate/figures/figS_short_noise.py` | B and W vs A with extra noise on short fragments (k = 1, 1.5, 2), FF 4%: model vs simulation |
+| Fig. 5, Figs. S1, S2: `figures/fig5_methods`, `figS1_methods_none`, `figS2_methods_low` | `src/evaluate/figures/fig5_methods.py` | sensitivity at FPR 0.135% by method, realistic / no / low noise |
+| Fig. S3: `figures/figS3_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
+| Fig. S4: `figures/figS4_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
+| Fig. S5: `figures/figS5_short_noise` | `src/evaluate/figures/figS_short_noise.py` | B and W vs A with extra noise on short fragments (k = 1, 1.5, 2), FF 4%: model vs simulation |
 | `tables/detection_limits_ci.csv`, `limit_differences_ci.csv` | `src/evaluate/limit_ci.py` | bootstrap 95% CIs of the detection limits (with each method's pooled test FPR) and of method differences (`clear` = CI excludes 0), main grid and shift_p10 / blend50 |
-| `tables/detection_limits_refined.csv`, `limits_dip_flags.csv` | `src/evaluate/detection_limits_refined.py` | main-grid detection limits on the 14-point FF grid (used by Table 1 and Table S4), and limits moved by a dip at a new FF |
+| `tables/detection_limits_refined.csv`, `limits_dip_flags.csv` | `src/evaluate/detection_limits_refined.py` | main-grid detection limits on the 14-point FF grid (used by Table 2 and Tables S4, S6–S8), and limits moved by a dip at a new FF |
 | `tables/detection_limits_ci_refined.csv`, `limit_differences_ci_refined.csv` | `src/evaluate/limit_ci.py --refined` | bootstrap CIs of the 14-point limits and of the method differences |
 | `tables/limits_refined_grid.csv`, `limits_refined_pairs.csv` | `src/evaluate/refined_grid.py` | interpolated vs refined-grid limits where pairs differ by < 0.2 points, and the rankings that change |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
@@ -196,15 +207,24 @@ and recomputes those limits on the refined grid.
 | `tables/robustness_snoise_pred.csv`, `robustness_snoise_qc.csv`, `snoise_budis_illustration.csv` | `src/evaluate/robustness_snoise_inputs.py` | short-fragment noise: model predictions with σ_u (before any simulation), noise QC on the reference normals, and the k that would match Budiš et al. (illustration, model only) |
 | `tables/robustness_snoise_summary.csv` | `src/evaluate/robustness_snoise.py` | short-fragment noise questions 1–6 across k (B vs A, depth effect, model error, W vs B vs A, B-opt, FPR) |
 | `robustness/<NAME>/tables/*` | the scripts above with `--scenario NAME` | the main-grid tables (results_all, detection limits, FPR, bootstrap, break-even, unified model) for one scenario |
-| `tables/breakeven_ratio_noise.csv` | `src/evaluate/bootstrap_ratio.py` | bootstrap SD of the observed ratio (Fig. 4 caption) |
-| `tables/table1_detection_limits.csv` | `src/evaluate/tables.py` | Table 1 |
-| `tables/table2_realism_yang.csv` | `src/evaluate/tables.py` | Table 2 |
-| `tables/tableS_*.csv` | `src/evaluate/tables.py` | supplementary: B-opt cutoffs, C2 importances, W vs W_fixedFF |
+| `tables/breakeven_ratio_noise.csv` | `src/evaluate/bootstrap_ratio.py` | bootstrap SD of the observed ratio (sampling noise of Fig. 4) |
+| Table 1: `tables/table1_realism_yang.csv` | `src/evaluate/tables.py` | realism check vs Yang et al. |
+| Table 2: `tables/table2_detection_limits.csv` | `src/evaluate/tables.py` | detection limits with 95% CIs, bold (lowest or not clearly different) and tree flags (14-point grid) |
+| Tables S1–S4: `tables/tableS1_bopt_cutoff.csv`, `tableS2_c2_importances.csv`, `tableS3_w_vs_wfixed_sens.csv`, `tableS4_w_vs_wfixed_limits.csv` | `src/evaluate/tables.py` | B-opt cutoffs, C2 importances, W vs W_fixedFF (sensitivity; limits on the 14-point grid) |
+| Table S5: `tables/tableS5_auc.csv` | `src/evaluate/tables.py` | AUC of every method and condition (the LaTeX table shows the 7 main methods) |
+| Tables S6–S8: `tables/tableS6_limits_conservative_fpr.csv`, `tableS7_limits_8_vs_14.csv`, `tableS8_limit_differences.csv` | `src/evaluate/tables.py` | conservative and matched-FPR limits (CIs for the latter), 8- vs 14-point limits, method differences with CIs (14-point grid) |
+| Table S9 (parts a–d): `tables/tableS9a_profile_inputs.csv` … `tableS9d_wg1_vs_a.csv` | `src/evaluate/tables.py` | fetal-profile scenarios (8-point grid) |
+| Table S10 (parts a–c): `tables/tableS10a_snoise_rise.csv` … `tableS10c_snoise_regimes.csv` | `src/evaluate/tables.py` | short-fragment noise and the four regimes (8-point grid) |
+| `tables/snoise_regimes.csv` | `src/evaluate/snoise_regimes.py` | regime (i)–(iv) per cutoff × FF × k from g, r and the two-σ model (model only) |
+| `tables/latex/*.tex` | `src/evaluate/latex_tables.py` | every table above as LaTeX (booktabs; `table1_realism_yang.tex` and `table2_detection_limits.tex` are the bare tabular, caption in main.tex; `tableS1_…` to `tableS10_…` with their captions, S9 and S10 one table each; reader labels such as W (FF 10%) and +10 bp; needs booktabs, longtable, amsmath) |
+| `supplement/additional_file_1.tex` | `src/evaluate/additional_file.py` | Additional file 1: Supplementary Note S1 (empty, written in the manuscript), Figs. S1–S5 with captions, Tables S1–S10. Compile with `cd supplement && tectonic additional_file_1.tex` (any LaTeX with amsmath, booktabs, longtable, graphicx works); the PDF is not committed |
+| `docs/revision_numbers.md` | `src/evaluate/revision_numbers.py` | every number quoted in the revised text, with its source file |
 | `tables/mappability.csv`, `survival_by_origin.csv` | `src/simulate/mappability.py`, `survival_by_origin.py` | S(l), q(c), survival by origin |
 | `tables/patients_qc.csv`, `noise_qc.csv` | `src/simulate/patients.py`, `noise_qc.py` | patient and noise QC |
 
 All figure and table captions are in `docs/captions.md`, generated by `python -m src.evaluate.captions` from
-the caption functions of the scripts above (numbers filled in from `results/`); do not edit it by hand.
+the caption functions of the scripts above; captions describe what is shown, and the numbers quoted in the
+text are in `docs/revision_numbers.md`. Do not edit either by hand.
 
 ## Reproducibility rules
 - Every parameter lives in `config/config.yaml`; every random step uses the configured seed.

@@ -19,6 +19,10 @@ ranking within the test set, and the reference only shifts and scales z (SD > 0)
 versions; it is computed from the original reference's z, and the self-test checks the identity exactly on the
 first CHECK_SAME resamples of every setting (all resamples with --check-all).
 
+Refined runs also add, after all the 9B rows, the pairs of the Table 2 bold rule (Task 10): in each setting the
+method with the lowest 14-point limit (sens basis) against every other Table 2 method (A, B, B-opt, W, C1, C2)
+that PAIRS does not already hold, with the same versions, bases and primary rule.
+
 Which version and basis to read:
   z-score pairs (W-B, W-A, B-A, B-opt-B, W_fixedFF-W, W_G1-*): the main version is test+ref (primary = True);
             test is kept for comparison.
@@ -115,7 +119,7 @@ def methods_of(grid, version):
 def pair_versions(grid, pair):
     if grid != MAIN:
         return ("test+ref",)
-    return ("test",) if "C2" in pair else VERSIONS
+    return ("test",) if any(m in TREES for m in pair) else VERSIONS
 
 
 def stream(config, grid, depth, noise, which):
@@ -370,17 +374,48 @@ def tables_for(res, config):
                              **({"lower_nobody_positive": nobody.loc[(m, res["depth"], res["noise"])]
                                  if basis == "sens" else pd.NA} if res["refined"] else {})})
     for a, b in PAIRS[MAIN if res["grid"] == MAIN else "scenario"]:
-        for v in pair_versions(res["grid"], (a, b)):
-            for basis in BASES:
-                la, lb = res["limits"][v][a][basis][0], res["limits"][v][b][basis][0]
-                share, lo, hi = ci(la - lb, u["ci_level"], u["min_share_numeric"])
-                pa = paper[basis].loc[(a, res["depth"], res["noise"]), "ff_limit"]
-                pb = paper[basis].loc[(b, res["depth"], res["noise"]), "ff_limit"]
-                drows.append({**key, "pair": f"{a}-{b}", "version": v, "basis": basis, "diff": pa - pb,
-                              "ci_lo": lo, "ci_hi": hi, "share_numeric": share,
-                              "clear": bool(np.isfinite(lo) and (lo > 0 or hi < 0)),
-                              "primary": v == ("test" if is_tree_pair((a, b)) else "test+ref")})
+        drows += pair_rows(res, u, paper, key, a, b)
     return rows, drows
+
+
+TABLE2_METHODS = ("A", "B", "B-opt", "W", "C1", "C2")
+
+
+def lowest_pairs(res, config):
+    """Task 10 (Table 2 bold rule): (lowest, other) for every other Table 2 method in this setting, where the lowest
+    is the method with the lowest 14-point limit on the sens basis, minus pairs PAIRS already holds (either order)."""
+    lim = paper_limits(grid_config(res["grid"]), True)["sens"]
+    vals = {m: lim.loc[(m, res["depth"], res["noise"]), "ff_limit"] for m in TABLE2_METHODS}
+    low = min((m for m in TABLE2_METHODS if np.isfinite(vals[m])), key=lambda m: vals[m])
+    have = {frozenset(p) for p in PAIRS[MAIN]}
+    return [(low, m) for m in TABLE2_METHODS if m != low and frozenset((low, m)) not in have]
+
+
+def extra_pair_rows(res, config):
+    """Rows of the lowest_pairs, with the same rule as the 9B pairs (appended after them in the refined output)."""
+    u = config["uncertainty"]
+    paper = paper_limits(grid_config(res["grid"]), True)
+    key = {"grid": res["grid"], "depth": res["depth"], "noise": res["noise"]}
+    out = []
+    for a, b in lowest_pairs(res, config):
+        out += pair_rows(res, u, paper, key, a, b)
+    return out
+
+
+def pair_rows(res, u, paper, key, a, b):
+    """Rows of one pair a-b in one setting: every version of the pair (pair_versions) x both bases."""
+    drows = []
+    for v in pair_versions(res["grid"], (a, b)):
+        for basis in BASES:
+            la, lb = res["limits"][v][a][basis][0], res["limits"][v][b][basis][0]
+            share, lo, hi = ci(la - lb, u["ci_level"], u["min_share_numeric"])
+            pa = paper[basis].loc[(a, res["depth"], res["noise"]), "ff_limit"]
+            pb = paper[basis].loc[(b, res["depth"], res["noise"]), "ff_limit"]
+            drows.append({**key, "pair": f"{a}-{b}", "version": v, "basis": basis, "diff": pa - pb,
+                          "ci_lo": lo, "ci_hi": hi, "share_numeric": share,
+                          "clear": bool(np.isfinite(lo) and (lo > 0 or hi < 0)),
+                          "primary": v == ("test" if is_tree_pair((a, b)) else "test+ref")})
+    return drows
 
 
 LIMIT_COLS = ["grid", "method", "depth", "noise", "version", "basis", "limit", "limit_text", "ci_lo", "ci_hi",
@@ -495,7 +530,7 @@ def main():
 
     with Pool(args.jobs) as pool:
         out = pool.map(bootstrap_setting, jobs) if args.jobs > 1 else [bootstrap_setting(j) for j in jobs]
-    rows, drows = [], []
+    rows, drows, extra = [], [], []
     for res in out:
         n_ident = check_identity(res, grid_config(res["grid"]))
         print(f"self-test {res['grid']} {res['depth']:,} {res['noise']}: no-resampling limits == "
@@ -507,6 +542,9 @@ def main():
         r, d = tables_for(res, config)
         rows += r
         drows += d
+        if res["refined"]:   # Table 2 bold rule: lowest method vs every other, after the 9B rows (Task 10)
+            extra += extra_pair_rows(res, config)
+    drows += extra
     limit_cols = LIMIT_COLS + (["lower_nobody_positive"] if args.refined else [])
     limits, diffs = pd.DataFrame(rows, columns=limit_cols), pd.DataFrame(drows, columns=DIFF_COLS)
     elapsed = time.time() - start

@@ -9,8 +9,8 @@ breakeven_check.predicted_ratio_two_sigma. Dashed line at 1.
 
 Reads results/tables/robustness_snoise_pred.csv (python -m src.evaluate.robustness_snoise_inputs), each
 scenario's results_all.csv (results/tables for k = 1, results/robustness/<NAME>/tables) and
-robustness_snoise_summary.csv (python -m src.evaluate.robustness_snoise, for the caption). Writes
-results/figures/figS_short_noise.png (300 dpi) and .pdf. Run from the repo root:
+robustness_snoise_summary.csv (python -m src.evaluate.robustness_snoise). Writes
+results/figures/figS5_short_noise.png (300 dpi) and .pdf. Run from the repo root:
     python -m src.evaluate.figures.figS_short_noise
 """
 
@@ -19,6 +19,7 @@ import pandas as pd
 from matplotlib.lines import Line2D
 
 from src.config import load_config, repo_path
+from src.evaluate import labels as L
 from src.evaluate.breakeven_check import predicted_ratio_two_sigma
 from src.evaluate.figures._style import FIG_WIDTH, MIN_FONT, MUTED, TEXT, new_figure, save_figure, style_axes
 from src.evaluate.figures.fig4_breakeven import DEPTH_RANGE
@@ -32,16 +33,13 @@ STYLES = ("-", "--", ":")                                            # line styl
 
 CAPTION = (
     "Figure S5. Gain over A with extra noise on short fragments, FF 4%: ratio of standardised separations "
-    "sep(method)/sep(A) for B (40–156 bp) and W, at k = 1 (main analysis), 1.5 and 2. In the k scenarios each "
-    "patient's chr21 fragments of 40–156 bp get a second, independent relative noise σ_s = σ·√(k² − 1), so the "
-    "window's chr21 fraction has relative SD ≈ σ·k (a step at 156 bp, the worst case for B); all groups, including "
-    "the reference, are simulated with it. Points: simulation; lines: the counting model with σ_u² = σ² + σ_s²·ρ_u², "
-    "ρ_u the share of a method's weight inside the window (A: {rho_a:.2f}, B: 1, W: {rho_w:.2f} at FF 4%), so "
-    "σ_B/σ_A = {sba_15:.2f} (k = 1.5) and {sba_2:.2f} (k = 2). At realistic noise B's ratio rises from {b1_1:.2f} at "
-    "1M to {b1_10:.2f} at 10M without extra noise, to {b15_10:.2f} at k = 1.5 and {b2_10:.2f} at k = 2 (simulation); "
-    "W, which takes only part of the extra noise, keeps a ratio of {w2_10:.2f} at k = 2. Over the 64 conditions per "
-    "scenario the model's median |relative error| is {b_lo:.2%}–{b_hi:.2%} for B and {w_lo:.2%}–{w_hi:.2%} for W. "
-    "Dashed: method = A."
+    "sep(method)/sep(A) for B (40–156 bp) and W, at $k = 1$ (main analysis), 1.5 and 2. In the $k$ scenarios "
+    "each patient's chr21 fragments of 40–156 bp get a second, independent relative noise "
+    r"$\sigma_s = \sigma\sqrt{{k^2 - 1}}$, so the window's chr21 fraction has relative SD $\approx \sigma k$ (a step "
+    "at 156 bp, the worst case for B); all groups, including the reference, are simulated with it. Points: "
+    r"simulation; lines: the counting model with $\sigma_u^2 = \sigma^2 + \sigma_s^2 \rho_u^2$, $\rho_u$ the share "
+    "of a method's weight inside the window (A: {rho_a:.2f}, B: 1, W: {rho_w:.2f} at FF 4%), so "
+    r"$\sigma_B/\sigma_A = {sba_15:.2f}$ ($k = 1.5$) and {sba_2:.2f} ($k = 2$). Dashed: method = A."
 )
 
 
@@ -76,7 +74,7 @@ def panel(ax, pred, obs_by_k, noise, title):
 
 
 def caption(config):
-    """Caption with its numbers computed from the predictions, the results and the summary."""
+    """Caption with the model inputs (ρ_u, σ_B/σ_A) from robustness_snoise_pred.csv."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     pred = pd.read_csv(tables / "robustness_snoise_pred.csv", dtype={"noise": str})
     p = pred[np.isclose(pred["ff"], FIG_FF) & (pred["noise"] == "realistic")]
@@ -84,17 +82,7 @@ def caption(config):
     names = list(profiles(config))
     rho_a = p[(p["method"] == "B")]["r_eff"].iloc[0]        # rho_A = r of the window = B's r
     rho_w = p[p["method"] == "W"]["rho_u"].iloc[0]
-    obs = {n: observed(pd.read_csv(d / "results_all.csv", dtype={"noise": str}), "realistic")
-           for n, (_, d) in profiles(config).items()}
-    s = pd.read_csv(tables / "robustness_snoise_summary.csv", dtype={"question": str, "depth": str, "noise": str})
-    s = s[s["question"] == "3"].set_index(["profile", "item"])["value"]
-    b = s.xs("median_abs_rel_error_B_all", level="item").drop(MAIN)
-    w = s.xs("median_abs_rel_error_W_all", level="item").drop(MAIN)
-    k15, k2 = names[1], names[2]
-    return CAPTION.format(rho_a=rho_a, rho_w=rho_w, sba_15=sba[k15], sba_2=sba[k2],
-                          b1_1=obs[MAIN]["B"].iloc[0], b1_10=obs[MAIN]["B"].iloc[-1], b15_10=obs[k15]["B"].iloc[-1],
-                          b2_10=obs[k2]["B"].iloc[-1], w2_10=obs[k2]["W"].iloc[-1],
-                          b_lo=b.min(), b_hi=b.max(), w_lo=w.min(), w_hi=w.max())
+    return CAPTION.format(rho_a=rho_a, rho_w=rho_w, sba_15=sba[names[1]], sba_2=sba[names[2]])
 
 
 def main():
@@ -111,7 +99,7 @@ def main():
     for ax, noise in zip(axes, levels):
         sigma = config["grid"]["noise_sigma_values"][config["grid"]["noise_sigma"].index(noise)]
         panel(ax, pred, {n: observed(results[n], noise) for n in prof}, noise,
-              f"{str(noise).capitalize()} (σ = {100 * sigma:g}%)")
+              L.noise_title(noise, sigma))
     axes[0].set_ylabel("sep(method) / sep(A)", color=MUTED)
     axes[0].set_ylim(0.95, 1.65)
 
@@ -123,7 +111,7 @@ def main():
     for t in legend.get_texts():
         t.set_color(TEXT)
     fig.text(0.98, 0.83, "lines: model · points: simulation", color=MUTED, fontsize=MIN_FONT, ha="right", va="bottom")
-    paths = save_figure(fig, config, "figS_short_noise", tight_layout=False)
+    paths = save_figure(fig, config, "figS5_short_noise", tight_layout=False)
     print("Saved " + ", ".join(str(p) for p in paths))
     print("\nCaption:\n" + caption(config))
 
