@@ -10,7 +10,8 @@ Run from the repo root (after the figures and tables):
 
 from src.config import load_config, repo_path
 from src.evaluate import tables
-from src.evaluate.figures import fig2_inputs, fig3_b_minus_a, fig4_breakeven, fig5_methods, figS_unified_model
+from src.evaluate.figures import (fig2_inputs, fig3_b_minus_a, fig4_breakeven, fig5_methods, figS_profiles,
+                                  figS_unified_model)
 
 HEADER = (
     "# Figure and table captions\n\n"
@@ -36,6 +37,8 @@ def sections(config):
             for k, (name, text) in enumerate(((n, t) for n, t in fig5.items() if n != "fig5_methods"), start=1)]
     out.append((f"Figure S{len(fig5)}", "src/evaluate/figures/figS_unified_model.py",
                 "results/figures/figS_unified_model", figS_unified_model.caption(config)))
+    out.append((f"Figure S{len(fig5) + 1}", "src/evaluate/figures/figS_profiles.py",
+                "results/figures/figS_profiles", figS_profiles.caption(config)))
     headings = {"table1_detection_limits.csv": "Table 1", "table2_realism_yang.csv": "Table 2",
                 "tableS_bopt_cutoff.csv": "Table S1", "tableS_c2_importances.csv": "Table S2",
                 "tableS_w_vs_wfixed.csv": "Table S3", "tableS_w_vs_wfixed_limits.csv": "Table S4"}

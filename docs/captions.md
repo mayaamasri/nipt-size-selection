@@ -46,6 +46,12 @@ Output: `results/figures/figS_unified_model` · script: `src/evaluate/figures/fi
 
 Figure S3. One counting model for size selection and length weighting, FF 4%: ratio of standardised separations sep(method)/sep(A) for B (40–156 bp) and W (each fragment weighted by P(fetal | length) at the true FF). Points: simulation; lines: the unified model, in which every z-score method is a chr21 fraction with length weights u(l), and the break-even formula (decision #8) holds with an effective enrichment g_eff = E[u·w*]/(FF·E[u]) and an effective read fraction r_eff = E[u]²/E[u²]. Dashed: method = A. Over all 96 conditions, the median |relative error| is 0.50% for W (95th percentile 2.0%), 0.47% for W_fixedFF and 0.92% for B and the seven fixed cutoffs together; without the 7 conditions where A's separation is below 1, 0.45%, 0.45% and 0.87% (unified_model_summary.csv). At realistic noise, W's predicted ratio rises from 1.36 at 1M to 1.54 at 10M; the best possible linear weights for that noise would reach 1.70 at 10M, so W achieves 90% of the optimum there (and 100% without extra noise). Like W, the model uses the true length distributions.
 
+## Figure S4
+
+Output: `results/figures/figS_profiles` · script: `src/evaluate/figures/figS_profiles.py`
+
+Figure S4. Gain over A under different fetal length profiles, FF 4%, realistic noise (σ = 0.35%): ratio of standardised separations sep(method)/sep(A) for B (40–156 bp), W (weights P(fetal | length) from the patients' true profile) and W_G1 (weights from the G1 profile used in the main analysis, as a lab using a published profile would; in G1 it equals W). Scenarios shift the fetal length distribution by −10 to +10 bp (fetal median 147 bp, 152 bp, 157 bp, 162 bp, 167 bp for shifts of −10, −5, +0, +5, +10 bp; maternal 172 bp) or blend it 50:50 with the maternal one (fetal median 166 bp); all groups, including the reference, are simulated from the scenario profile. Points: simulation; lines: the unified counting model (Fig. S3) with each method's weights and the scenario's true length distributions. Over all 96 conditions per scenario, the model's median |relative error| is 0.8%–1.0% for B and 0.5%–0.6% for W_G1. Dashed: method = A.
+
 ## Table 1
 
 Output: `results/tables/table1_detection_limits.csv` · script: `src/evaluate/tables.py`

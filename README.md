@@ -41,6 +41,7 @@ src/evaluate/          one condition end to end, detection limits, bootstrap, br
 src/evaluate/figures/  one script per manuscript figure
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
+results/robustness/    per-scenario tables of the fetal-profile robustness analysis (Task 07)
 manuscript/            manuscript source
 ```
 
@@ -100,6 +101,27 @@ To check that one condition reproduces its saved rows exactly (a few seconds):
 python -m src.evaluate.check_rerun --ff 0.04 --depth 5000000 --noise realistic
 ```
 
+### Robustness to the fetal length profile (`--scenario`)
+
+`config/config.yaml` → `robustness.fetal_profiles` defines five fetal-profile scenarios (decision #17): the G1
+fetal length distribution shifted by −10, −5, +5 or +10 bp, or blended 50:50 with the maternal one. They are
+off by default; the main analysis (G1) does not change. `run_condition`, `check_rerun`, `detection_limits`,
+`fpr_check`, `bootstrap_diff`, `breakeven_check` and `unified_model_check` accept `--scenario NAME`, which loads
+the config through `load_config(scenario=NAME)` (`src/config.py`): all patients come from the scenario profile,
+the method W_G1 (weights from the G1 profile) is added, W_fixedFF and C2 use the G1 weights, and every output
+goes to `results/robustness/NAME/tables` instead of `results/tables`. Patient seeds are the same as the main
+grid's, which pairs scenarios only partially.
+
+```bash
+bash scripts/run_all.sh --skip-pool --robustness
+```
+reruns all five scenarios as well (sequential time ~13 min per scenario, ~65 min for all five; they can also run in
+parallel, one job per scenario). Without `--robustness`, `run_all.sh` uses the committed scenario tables. One
+scenario condition can be checked like a main one:
+```bash
+python -m src.evaluate.check_rerun --scenario shift_p10 --ff 0.04 --depth 10000000 --noise realistic
+```
+
 ## Where each figure and table comes from
 
 | Output (`results/`) | Script | Content |
@@ -110,6 +132,7 @@ python -m src.evaluate.check_rerun --ff 0.04 --depth 5000000 --noise realistic
 | `figures/fig4_breakeven` | `src/evaluate/figures/fig4_breakeven.py` | break-even formula vs simulation at FF 4% (from `tables/breakeven_check.csv`) |
 | `figures/fig5_methods`, `figS_methods_none`, `figS_methods_low` | `src/evaluate/figures/fig5_methods.py` | sensitivity at FPR 0.135% by method, realistic / no / low noise |
 | `figures/figS_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
+| `figures/figS_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
 | `tables/results_all.csv` and per-condition tables | `src/evaluate/run_condition.py` | all metrics per condition × method |
 | `tables/detection_limits.csv` | `src/evaluate/detection_limits.py` | detection limits for all 14 methods |
@@ -117,6 +140,9 @@ python -m src.evaluate.check_rerun --ff 0.04 --depth 5000000 --noise realistic
 | `tables/fig3_b_minus_a.csv` | `src/evaluate/bootstrap_diff.py` | B − A with paired-bootstrap SE and CI |
 | `tables/breakeven_check.csv`, `breakeven_summary.csv` | `src/evaluate/breakeven_check.py` | predicted vs observed separation ratios |
 | `tables/unified_model_check.csv`, `unified_model_summary.csv` | `src/evaluate/unified_model_check.py` | unified counting model (any length weighting) vs observed ratios for B, B_c, W, W_fixedFF; W vs the optimal weights (analytic) |
+| `tables/robustness_profiles_inputs.csv`, `robustness_profiles_pred.csv` | `src/evaluate/robustness_inputs.py` | per fetal-profile scenario: median lengths, g, r of the 40–156 bp window; model predictions for B, W, W_G1, W_fixedFF (before any simulation) |
+| `tables/robustness_profiles_summary.csv` | `src/evaluate/robustness_profiles.py` | robustness questions 1–7 across scenarios (B vs A, depth effect, model error, cost of a wrong profile, ranking, FPR, B-opt cutoffs) |
+| `robustness/<NAME>/tables/*` | the scripts above with `--scenario NAME` | the main-grid tables (results_all, detection limits, FPR, bootstrap, break-even, unified model) for one scenario |
 | `tables/breakeven_ratio_noise.csv` | `src/evaluate/bootstrap_ratio.py` | bootstrap SD of the observed ratio (Fig. 4 caption) |
 | `tables/table1_detection_limits.csv` | `src/evaluate/tables.py` | Table 1 |
 | `tables/table2_realism_yang.csv` | `src/evaluate/tables.py` | Table 2 |

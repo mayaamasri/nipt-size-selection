@@ -1,0 +1,349 @@
+question,profile,depth,noise,item,value,text
+1,G1,all,all,n_sep_ratio_B_A_below_1,0,
+1,G1,all,all,n_sens_diff_B_A_sig_negative,0,
+1,shift_m10,all,all,n_sep_ratio_B_A_below_1,0,
+1,shift_m10,all,all,n_sens_diff_B_A_sig_negative,0,
+1,shift_m5,all,all,n_sep_ratio_B_A_below_1,0,
+1,shift_m5,all,all,n_sens_diff_B_A_sig_negative,0,
+1,shift_p5,all,all,n_sep_ratio_B_A_below_1,61,FF 1% 1M low (0.985); FF 1% 1M realistic (0.962); FF 1% 2.5M low (0.967); FF 1% 2.5M none (0.973); FF 1% 5M none (0.977); FF 2% 1M low (0.997); FF 2% 1M none (0.945); FF 2% 2.5M low (0.978); FF 2% 2.5M none (0.975); FF 2% 5M none (0.935); FF 2% 10M none (0.938); FF 3% 1M low (0.982); FF 3% 1M none (0.940); FF 3% 1M realistic (0.987); FF 3% 2.5M low (0.978); FF 3% 2.5M none (0.962); FF 3% 5M low (0.992); FF 3% 5M none (0.939); FF 3% 10M none (0.954); FF 4% 1M low (0.966); FF 4% 1M none (0.902); FF 4% 1M realistic (0.991); FF 4% 2.5M low (0.974); FF 4% 2.5M none (0.949); FF 4% 5M low (0.973); FF 4% 5M none (0.940); FF 4% 10M none (0.914); FF 6% 1M low (0.953); FF 6% 1M none (0.934); FF 6% 1M realistic (0.977); FF 6% 2.5M low (0.954); FF 6% 2.5M none (0.916); FF 6% 5M low (0.968); FF 6% 5M none (0.927); FF 6% 10M none (0.919); FF 8% 1M low (0.920); FF 8% 1M none (0.903); FF 8% 1M realistic (0.952); FF 8% 2.5M low (0.964); FF 8% 2.5M none (0.930); FF 8% 5M low (0.972); FF 8% 5M none (0.908); FF 8% 10M none (0.924); FF 10% 1M low (0.931); FF 10% 1M none (0.908); FF 10% 1M realistic (0.950); FF 10% 2.5M low (0.929); FF 10% 2.5M none (0.908); FF 10% 5M low (0.941); FF 10% 5M none (0.915); FF 10% 10M none (0.907); FF 15% 1M low (0.887); FF 15% 1M none (0.885); FF 15% 1M realistic (0.933); FF 15% 2.5M low (0.909); FF 15% 2.5M none (0.888); FF 15% 2.5M realistic (0.996); FF 15% 5M low (0.931); FF 15% 5M none (0.891); FF 15% 10M low (0.972); FF 15% 10M none (0.882)
+1,shift_p5,all,all,n_sens_diff_B_A_sig_negative,10,"FF 2% 10M none (-17.7 pts, CI -26.1 to -4.5); FF 3% 5M none (-19.8 pts, CI -26.4 to -5.8); FF 4% 1M none (-8.1 pts, CI -16.0 to -3.1); FF 4% 5M low (-3.8 pts, CI -6.0 to -0.1); FF 4% 5M none (-3.2 pts, CI -6.5 to -0.4); FF 8% 1M low (-8.5 pts, CI -16.7 to -3.5); FF 8% 1M none (-7.4 pts, CI -13.0 to -3.0); FF 10% 1M low (-2.0 pts, CI -3.3 to -0.5); FF 10% 1M none (-1.5 pts, CI -2.7 to -0.4); FF 10% 1M realistic (-1.9 pts, CI -4.2 to -0.3)"
+1,shift_p10,all,all,n_sep_ratio_B_A_below_1,88,FF 1% 1M low (0.839); FF 1% 1M none (0.811); FF 1% 1M realistic (0.815); FF 1% 2.5M low (0.836); FF 1% 2.5M none (0.786); FF 1% 2.5M realistic (0.907); FF 1% 5M low (0.816); FF 1% 5M none (0.795); FF 1% 5M realistic (0.960); FF 1% 10M low (0.929); FF 1% 10M none (0.789); FF 2% 1M low (0.832); FF 2% 1M none (0.801); FF 2% 1M realistic (0.880); FF 2% 2.5M low (0.806); FF 2% 2.5M none (0.821); FF 2% 2.5M realistic (0.853); FF 2% 5M low (0.839); FF 2% 5M none (0.818); FF 2% 5M realistic (0.989); FF 2% 10M low (0.895); FF 2% 10M none (0.781); FF 3% 1M low (0.813); FF 3% 1M none (0.770); FF 3% 1M realistic (0.855); FF 3% 2.5M low (0.836); FF 3% 2.5M none (0.795); FF 3% 2.5M realistic (0.898); FF 3% 5M low (0.839); FF 3% 5M none (0.805); FF 3% 5M realistic (0.988); FF 3% 10M low (0.861); FF 3% 10M none (0.787); FF 4% 1M low (0.800); FF 4% 1M none (0.785); FF 4% 1M realistic (0.806); FF 4% 2.5M low (0.814); FF 4% 2.5M none (0.782); FF 4% 2.5M realistic (0.909); FF 4% 5M low (0.840); FF 4% 5M none (0.786); FF 4% 5M realistic (0.966); FF 4% 10M low (0.874); FF 4% 10M none (0.794); FF 6% 1M low (0.775); FF 6% 1M none (0.777); FF 6% 1M realistic (0.849); FF 6% 2.5M low (0.807); FF 6% 2.5M none (0.787); FF 6% 2.5M realistic (0.908); FF 6% 5M low (0.825); FF 6% 5M none (0.783); FF 6% 5M realistic (0.986); FF 6% 10M low (0.857); FF 6% 10M none (0.793); FF 8% 1M low (0.784); FF 8% 1M none (0.775); FF 8% 1M realistic (0.828); FF 8% 2.5M low (0.809); FF 8% 2.5M none (0.779); FF 8% 2.5M realistic (0.870); FF 8% 5M low (0.821); FF 8% 5M none (0.782); FF 8% 5M realistic (0.960); FF 8% 10M low (0.860); FF 8% 10M none (0.785); FF 10% 1M low (0.777); FF 10% 1M none (0.781); FF 10% 1M realistic (0.823); FF 10% 2.5M low (0.792); FF 10% 2.5M none (0.765); FF 10% 2.5M realistic (0.877); FF 10% 5M low (0.811); FF 10% 5M none (0.779); FF 10% 5M realistic (0.953); FF 10% 10M low (0.841); FF 10% 10M none (0.749); FF 15% 1M low (0.765); FF 15% 1M none (0.747); FF 15% 1M realistic (0.809); FF 15% 2.5M low (0.763); FF 15% 2.5M none (0.755); FF 15% 2.5M realistic (0.845); FF 15% 5M low (0.791); FF 15% 5M none (0.759); FF 15% 5M realistic (0.949); FF 15% 10M low (0.838); FF 15% 10M none (0.748)
+1,shift_p10,all,all,n_sens_diff_B_A_sig_negative,44,"FF 1% 1M none (-0.7 pts, CI -1.5 to -0.1); FF 1% 5M low (-1.5 pts, CI -3.9 to -0.2); FF 1% 10M none (-5.8 pts, CI -9.7 to -1.6); FF 2% 2.5M none (-4.0 pts, CI -7.6 to -0.8); FF 2% 2.5M realistic (-3.7 pts, CI -6.5 to -1.8); FF 2% 5M low (-10.7 pts, CI -18.1 to -1.8); FF 2% 5M none (-8.5 pts, CI -18.6 to -1.8); FF 2% 10M low (-13.6 pts, CI -24.2 to -7.4); FF 2% 10M none (-37.2 pts, CI -44.5 to -26.1); FF 3% 1M low (-8.3 pts, CI -10.6 to -3.0); FF 3% 1M realistic (-3.4 pts, CI -6.4 to -0.4); FF 3% 2.5M low (-13.0 pts, CI -21.5 to -6.4); FF 3% 2.5M none (-16.2 pts, CI -22.3 to -6.9); FF 3% 5M low (-17.6 pts, CI -26.3 to -10.7); FF 3% 5M none (-27.7 pts, CI -36.4 to -17.6); FF 3% 10M low (-9.8 pts, CI -17.7 to -4.0); FF 3% 10M none (-15.2 pts, CI -23.6 to -11.2); FF 4% 1M low (-7.5 pts, CI -16.4 to -1.9); FF 4% 1M none (-9.8 pts, CI -16.2 to -3.3); FF 4% 1M realistic (-8.0 pts, CI -11.6 to -1.7); FF 4% 2.5M low (-19.4 pts, CI -28.1 to -8.3); FF 4% 2.5M none (-26.1 pts, CI -33.9 to -17.1); FF 4% 2.5M realistic (-12.5 pts, CI -17.9 to -1.7); FF 4% 5M low (-14.9 pts, CI -22.2 to -7.5); FF 4% 5M none (-22.2 pts, CI -28.3 to -13.5); FF 4% 10M low (-0.5 pts, CI -0.9 to -0.1); FF 4% 10M none (-0.9 pts, CI -1.4 to -0.4); FF 6% 1M low (-29.9 pts, CI -37.1 to -19.9); FF 6% 1M none (-27.9 pts, CI -36.9 to -22.3); FF 6% 1M realistic (-10.6 pts, CI -21.4 to -3.4); FF 6% 2.5M low (-8.2 pts, CI -10.2 to -5.4); FF 6% 2.5M none (-11.7 pts, CI -14.0 to -8.7); FF 6% 2.5M realistic (-11.7 pts, CI -20.6 to -4.0); FF 6% 5M low (-0.3 pts, CI -0.9 to -0.1); FF 8% 1M low (-30.2 pts, CI -39.6 to -19.9); FF 8% 1M none (-25.1 pts, CI -30.3 to -19.5); FF 8% 1M realistic (-16.2 pts, CI -21.8 to -11.9); FF 8% 2.5M low (-1.1 pts, CI -1.7 to -0.5); FF 8% 2.5M none (-1.0 pts, CI -1.9 to -0.4); FF 8% 2.5M realistic (-1.4 pts, CI -2.3 to -0.7); FF 10% 1M low (-9.6 pts, CI -12.8 to -6.7); FF 10% 1M none (-10.6 pts, CI -16.5 to -6.9); FF 10% 1M realistic (-9.0 pts, CI -12.2 to -6.1); FF 15% 1M none (-0.2 pts, CI -0.5 to -0.1)"
+1,blend50,all,all,n_sep_ratio_B_A_below_1,88,FF 1% 1M low (0.743); FF 1% 1M none (0.695); FF 1% 1M realistic (0.799); FF 1% 2.5M low (0.791); FF 1% 2.5M none (0.784); FF 1% 2.5M realistic (0.922); FF 1% 5M low (0.814); FF 1% 5M none (0.793); FF 1% 5M realistic (0.950); FF 1% 10M low (0.856); FF 1% 10M none (0.782); FF 2% 1M low (0.793); FF 2% 1M none (0.784); FF 2% 1M realistic (0.785); FF 2% 2.5M low (0.832); FF 2% 2.5M none (0.767); FF 2% 2.5M realistic (0.911); FF 2% 5M low (0.818); FF 2% 5M none (0.784); FF 2% 5M realistic (0.963); FF 2% 10M low (0.857); FF 2% 10M none (0.785); FF 3% 1M low (0.794); FF 3% 1M none (0.764); FF 3% 1M realistic (0.780); FF 3% 2.5M low (0.796); FF 3% 2.5M none (0.775); FF 3% 2.5M realistic (0.864); FF 3% 5M low (0.823); FF 3% 5M none (0.766); FF 3% 5M realistic (0.941); FF 3% 10M low (0.847); FF 3% 10M none (0.775); FF 4% 1M low (0.777); FF 4% 1M none (0.784); FF 4% 1M realistic (0.816); FF 4% 2.5M low (0.783); FF 4% 2.5M none (0.767); FF 4% 2.5M realistic (0.874); FF 4% 5M low (0.801); FF 4% 5M none (0.773); FF 4% 5M realistic (0.953); FF 4% 10M low (0.840); FF 4% 10M none (0.773); FF 6% 1M low (0.769); FF 6% 1M none (0.743); FF 6% 1M realistic (0.785); FF 6% 2.5M low (0.794); FF 6% 2.5M none (0.772); FF 6% 2.5M realistic (0.843); FF 6% 5M low (0.794); FF 6% 5M none (0.759); FF 6% 5M realistic (0.945); FF 6% 10M low (0.839); FF 6% 10M none (0.770); FF 8% 1M low (0.775); FF 8% 1M none (0.747); FF 8% 1M realistic (0.792); FF 8% 2.5M low (0.760); FF 8% 2.5M none (0.766); FF 8% 2.5M realistic (0.875); FF 8% 5M low (0.808); FF 8% 5M none (0.768); FF 8% 5M realistic (0.919); FF 8% 10M low (0.845); FF 8% 10M none (0.757); FF 10% 1M low (0.759); FF 10% 1M none (0.754); FF 10% 1M realistic (0.788); FF 10% 2.5M low (0.787); FF 10% 2.5M none (0.751); FF 10% 2.5M realistic (0.861); FF 10% 5M low (0.791); FF 10% 5M none (0.748); FF 10% 5M realistic (0.933); FF 10% 10M low (0.821); FF 10% 10M none (0.760); FF 15% 1M low (0.754); FF 15% 1M none (0.748); FF 15% 1M realistic (0.767); FF 15% 2.5M low (0.765); FF 15% 2.5M none (0.738); FF 15% 2.5M realistic (0.845); FF 15% 5M low (0.780); FF 15% 5M none (0.739); FF 15% 5M realistic (0.910); FF 15% 10M low (0.811); FF 15% 10M none (0.744)
+1,blend50,all,all,n_sens_diff_B_A_sig_negative,45,"FF 1% 5M low (-1.7 pts, CI -3.6 to -0.2); FF 1% 10M none (-7.4 pts, CI -10.0 to -2.7); FF 2% 2.5M low (-5.3 pts, CI -7.7 to -2.2); FF 2% 2.5M none (-5.7 pts, CI -9.3 to -1.5); FF 2% 2.5M realistic (-2.6 pts, CI -5.1 to -0.5); FF 2% 5M low (-12.3 pts, CI -17.7 to -6.9); FF 2% 5M none (-18.5 pts, CI -26.9 to -13.4); FF 2% 10M low (-14.1 pts, CI -25.2 to -2.8); FF 2% 10M none (-30.5 pts, CI -41.1 to -23.1); FF 3% 1M low (-3.2 pts, CI -6.7 to -1.1); FF 3% 1M none (-5.2 pts, CI -7.9 to -1.2); FF 3% 1M realistic (-6.6 pts, CI -9.2 to -1.5); FF 3% 2.5M low (-13.4 pts, CI -24.0 to -8.0); FF 3% 2.5M none (-12.9 pts, CI -22.0 to -7.2); FF 3% 5M low (-22.0 pts, CI -32.2 to -7.9); FF 3% 5M none (-24.6 pts, CI -37.8 to -15.8); FF 3% 10M low (-11.2 pts, CI -15.2 to -7.7); FF 3% 10M none (-14.2 pts, CI -17.5 to -8.4); FF 4% 1M low (-11.0 pts, CI -15.0 to -5.2); FF 4% 1M none (-12.1 pts, CI -17.1 to -7.2); FF 4% 1M realistic (-9.5 pts, CI -15.8 to -3.2); FF 4% 2.5M low (-25.8 pts, CI -37.0 to -17.0); FF 4% 2.5M none (-33.5 pts, CI -41.0 to -22.2); FF 4% 2.5M realistic (-17.8 pts, CI -25.8 to -8.0); FF 4% 5M low (-20.6 pts, CI -27.7 to -13.2); FF 4% 5M none (-14.3 pts, CI -18.5 to -10.9); FF 4% 10M low (-1.0 pts, CI -1.8 to -0.4); FF 4% 10M none (-0.8 pts, CI -1.4 to -0.2); FF 6% 1M low (-30.2 pts, CI -41.5 to -21.7); FF 6% 1M none (-32.8 pts, CI -40.1 to -20.5); FF 6% 1M realistic (-28.0 pts, CI -37.7 to -20.5); FF 6% 2.5M low (-14.6 pts, CI -19.1 to -10.9); FF 6% 2.5M none (-14.2 pts, CI -20.9 to -10.7); FF 6% 2.5M realistic (-19.3 pts, CI -27.0 to -11.2); FF 6% 5M low (-0.9 pts, CI -1.8 to -0.4); FF 6% 5M none (-0.2 pts, CI -0.5 to -0.1); FF 8% 1M low (-31.4 pts, CI -37.7 to -26.2); FF 8% 1M none (-30.0 pts, CI -33.7 to -22.6); FF 8% 1M realistic (-24.3 pts, CI -33.4 to -15.4); FF 8% 2.5M low (-1.7 pts, CI -2.8 to -0.8); FF 8% 2.5M none (-1.4 pts, CI -2.0 to -0.8); FF 8% 2.5M realistic (-2.1 pts, CI -4.5 to -0.9); FF 10% 1M low (-12.3 pts, CI -19.5 to -9.4); FF 10% 1M none (-13.9 pts, CI -20.3 to -8.8); FF 10% 1M realistic (-17.2 pts, CI -22.6 to -10.3)"
+2,G1,1M->10M,none,sep_ratio_B_A_ff4_change_obs,-0.00293693,observed 1.101 -> 1.098; model 1.093 -> 1.093
+2,G1,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.0919782,observed 1.104 -> 1.205; model 1.106 -> 1.204
+2,G1,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.286814,observed 1.163 -> 1.497; model 1.157 -> 1.521
+2,shift_m10,1M->10M,none,sep_ratio_B_A_ff4_change_obs,-0.00485995,observed 1.447 -> 1.440; model 1.416 -> 1.416
+2,shift_m10,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.118445,observed 1.417 -> 1.585; model 1.432 -> 1.558
+2,shift_m10,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.330193,observed 1.469 -> 1.953; model 1.497 -> 1.963
+2,shift_m5,1M->10M,none,sep_ratio_B_A_ff4_change_obs,-0.0114582,observed 1.256 -> 1.241; model 1.249 -> 1.249
+2,shift_m5,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.105009,observed 1.240 -> 1.370; model 1.263 -> 1.375
+2,shift_m5,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.299749,observed 1.317 -> 1.712; model 1.321 -> 1.734
+2,shift_p5,1M->10M,none,sep_ratio_B_A_ff4_change_obs,0.0137703,observed 0.902 -> 0.914; model 0.937 -> 0.937
+2,shift_p5,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.0830813,observed 0.966 -> 1.046; model 0.948 -> 1.033
+2,shift_p5,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.310627,observed 0.991 -> 1.299; model 0.992 -> 1.306
+2,shift_p10,1M->10M,none,sep_ratio_B_A_ff4_change_obs,0.012189,observed 0.785 -> 0.794; model 0.791 -> 0.791
+2,shift_p10,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.0919243,observed 0.800 -> 0.874; model 0.799 -> 0.871
+2,shift_p10,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.341976,observed 0.806 -> 1.081; model 0.837 -> 1.103
+2,blend50,1M->10M,none,sep_ratio_B_A_ff4_change_obs,-0.0144256,observed 0.784 -> 0.773; model 0.769 -> 0.769
+2,blend50,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.082327,observed 0.777 -> 0.840; model 0.778 -> 0.848
+2,blend50,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.293988,observed 0.816 -> 1.055; model 0.814 -> 1.074
+3,G1,all,all,median_abs_rel_error_B_all,0.009211,"n 768, p95 3.46%, mean signed +0.23% (t = 1.5)"
+3,G1,all,all,median_abs_rel_error_B_without_low_signal,0.008733,"n 712, p95 2.90%, mean signed +0.22% (t = 1.6)"
+3,G1,all,all,median_abs_rel_error_W_all,0.005014,"n 96, p95 2.04%, mean signed +0.27% (t = 2.6)"
+3,G1,all,all,median_abs_rel_error_W_without_low_signal,0.004548,"n 89, p95 1.56%, mean signed +0.24% (t = 2.5)"
+3,G1,all,all,median_abs_rel_error_W_G1_all,0.005014,"n 96, p95 2.04%, mean signed +0.27% (t = 2.6)"
+3,G1,all,all,median_abs_rel_error_W_G1_without_low_signal,0.004548,"n 89, p95 1.56%, mean signed +0.24% (t = 2.5)"
+3,G1,all,all,median_abs_rel_error_W_fixedFF_all,0.004726,"n 96, p95 1.82%, mean signed +0.24% (t = 2.5)"
+3,G1,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.004458,"n 89, p95 1.44%, mean signed +0.22% (t = 2.4)"
+3,shift_m10,all,all,median_abs_rel_error_B_all,0.008168,"n 768, p95 3.23%, mean signed -0.02% (t = -0.1)"
+3,shift_m10,all,all,median_abs_rel_error_B_without_low_signal,0.007642,"n 712, p95 2.22%, mean signed -0.07% (t = -0.6)"
+3,shift_m10,all,all,median_abs_rel_error_W_all,0.006765,"n 96, p95 2.43%, mean signed -0.01% (t = -0.1)"
+3,shift_m10,all,all,median_abs_rel_error_W_without_low_signal,0.006299,"n 89, p95 1.77%, mean signed -0.05% (t = -0.5)"
+3,shift_m10,all,all,median_abs_rel_error_W_G1_all,0.005754,"n 96, p95 2.15%, mean signed -0.03% (t = -0.3)"
+3,shift_m10,all,all,median_abs_rel_error_W_G1_without_low_signal,0.005359,"n 89, p95 1.52%, mean signed -0.05% (t = -0.6)"
+3,shift_m10,all,all,median_abs_rel_error_W_fixedFF_all,0.005466,"n 96, p95 1.85%, mean signed -0.05% (t = -0.5)"
+3,shift_m10,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.005147,"n 89, p95 1.52%, mean signed -0.05% (t = -0.6)"
+3,shift_m5,all,all,median_abs_rel_error_B_all,0.008202,"n 768, p95 3.15%, mean signed -0.10% (t = -0.7)"
+3,shift_m5,all,all,median_abs_rel_error_B_without_low_signal,0.007828,"n 712, p95 2.74%, mean signed -0.03% (t = -0.3)"
+3,shift_m5,all,all,median_abs_rel_error_W_all,0.005634,"n 96, p95 2.18%, mean signed -0.21% (t = -1.8)"
+3,shift_m5,all,all,median_abs_rel_error_W_without_low_signal,0.005475,"n 89, p95 1.94%, mean signed -0.11% (t = -1.1)"
+3,shift_m5,all,all,median_abs_rel_error_W_G1_all,0.004677,"n 96, p95 1.97%, mean signed -0.18% (t = -1.9)"
+3,shift_m5,all,all,median_abs_rel_error_W_G1_without_low_signal,0.00431,"n 89, p95 1.82%, mean signed -0.09% (t = -1.1)"
+3,shift_m5,all,all,median_abs_rel_error_W_fixedFF_all,0.00443,"n 96, p95 1.83%, mean signed -0.16% (t = -1.8)"
+3,shift_m5,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.004411,"n 89, p95 1.71%, mean signed -0.08% (t = -1.0)"
+3,shift_p5,all,all,median_abs_rel_error_B_all,0.00968,"n 768, p95 4.57%, mean signed +0.15% (t = 0.9)"
+3,shift_p5,all,all,median_abs_rel_error_B_without_low_signal,0.00906,"n 712, p95 3.51%, mean signed +0.19% (t = 1.3)"
+3,shift_p5,all,all,median_abs_rel_error_W_all,0.003375,"n 96, p95 1.89%, mean signed +0.15% (t = 1.6)"
+3,shift_p5,all,all,median_abs_rel_error_W_without_low_signal,0.003151,"n 89, p95 1.62%, mean signed +0.14% (t = 1.9)"
+3,shift_p5,all,all,median_abs_rel_error_W_G1_all,0.004626,"n 96, p95 2.31%, mean signed +0.15% (t = 1.5)"
+3,shift_p5,all,all,median_abs_rel_error_W_G1_without_low_signal,0.004453,"n 89, p95 1.78%, mean signed +0.15% (t = 1.7)"
+3,shift_p5,all,all,median_abs_rel_error_W_fixedFF_all,0.004393,"n 96, p95 2.02%, mean signed +0.15% (t = 1.6)"
+3,shift_p5,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.003906,"n 89, p95 1.52%, mean signed +0.14% (t = 1.8)"
+3,shift_p10,all,all,median_abs_rel_error_B_all,0.009766,"n 768, p95 4.23%, mean signed -0.13% (t = -0.7)"
+3,shift_p10,all,all,median_abs_rel_error_B_without_low_signal,0.00932,"n 712, p95 3.97%, mean signed -0.00% (t = -0.0)"
+3,shift_p10,all,all,median_abs_rel_error_W_all,0.004187,"n 96, p95 1.44%, mean signed -0.02% (t = -0.2)"
+3,shift_p10,all,all,median_abs_rel_error_W_without_low_signal,0.004079,"n 89, p95 1.34%, mean signed +0.04% (t = 0.5)"
+3,shift_p10,all,all,median_abs_rel_error_W_G1_all,0.005868,"n 96, p95 2.32%, mean signed -0.05% (t = -0.5)"
+3,shift_p10,all,all,median_abs_rel_error_W_G1_without_low_signal,0.005765,"n 89, p95 2.28%, mean signed +0.03% (t = 0.3)"
+3,shift_p10,all,all,median_abs_rel_error_W_fixedFF_all,0.005967,"n 96, p95 2.10%, mean signed -0.04% (t = -0.4)"
+3,shift_p10,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.005856,"n 89, p95 2.05%, mean signed +0.03% (t = 0.3)"
+3,blend50,all,all,median_abs_rel_error_B_all,0.009657,"n 768, p95 5.12%, mean signed -0.09% (t = -0.4)"
+3,blend50,all,all,median_abs_rel_error_B_without_low_signal,0.008971,"n 712, p95 3.63%, mean signed -0.01% (t = -0.1)"
+3,blend50,all,all,median_abs_rel_error_W_all,0.00322,"n 96, p95 1.13%, mean signed -0.07% (t = -1.0)"
+3,blend50,all,all,median_abs_rel_error_W_without_low_signal,0.002984,"n 89, p95 0.90%, mean signed -0.05% (t = -0.9)"
+3,blend50,all,all,median_abs_rel_error_W_G1_all,0.005404,"n 96, p95 2.03%, mean signed -0.12% (t = -1.0)"
+3,blend50,all,all,median_abs_rel_error_W_G1_without_low_signal,0.00517,"n 89, p95 1.57%, mean signed -0.08% (t = -0.9)"
+3,blend50,all,all,median_abs_rel_error_W_fixedFF_all,0.005389,"n 96, p95 1.68%, mean signed -0.11% (t = -1.1)"
+3,blend50,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.005001,"n 89, p95 1.41%, mean signed -0.08% (t = -0.9)"
+4,G1,1000000,none,limit_W_G1_minus_W,0,"W 7.03%, W_G1 7.03%, W_fixedFF 7.05%"
+4,G1,1000000,none,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,2500000,none,limit_W_G1_minus_W,0,"W 4.52%, W_G1 4.52%, W_fixedFF 4.50%"
+4,G1,2500000,none,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,5000000,none,limit_W_G1_minus_W,0,"W 2.94%, W_G1 2.94%, W_fixedFF 2.95%"
+4,G1,5000000,none,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,10000000,none,limit_W_G1_minus_W,0,"W 1.99%, W_G1 1.99%, W_fixedFF 2.00%"
+4,G1,10000000,none,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,1000000,low,limit_W_G1_minus_W,0,"W 7.18%, W_G1 7.18%, W_fixedFF 7.18%"
+4,G1,1000000,low,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,2500000,low,limit_W_G1_minus_W,0,"W 4.46%, W_G1 4.46%, W_fixedFF 4.52%"
+4,G1,2500000,low,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,5000000,low,limit_W_G1_minus_W,0,"W 2.96%, W_G1 2.96%, W_fixedFF 2.97%"
+4,G1,5000000,low,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,10000000,low,limit_W_G1_minus_W,0,"W 2.45%, W_G1 2.45%, W_fixedFF 2.51%"
+4,G1,10000000,low,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,1000000,realistic,limit_W_G1_minus_W,0,"W 7.33%, W_G1 7.33%, W_fixedFF 7.34%"
+4,G1,1000000,realistic,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,2500000,realistic,limit_W_G1_minus_W,0,"W 5.20%, W_G1 5.20%, W_fixedFF 5.28%"
+4,G1,2500000,realistic,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,5000000,realistic,limit_W_G1_minus_W,0,"W 3.69%, W_G1 3.69%, W_fixedFF 3.74%"
+4,G1,5000000,realistic,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,G1,10000000,realistic,limit_W_G1_minus_W,0,"W 2.89%, W_G1 2.89%, W_fixedFF 2.93%"
+4,G1,10000000,realistic,sep_W_G1_over_W_median,1,range 1.000-1.000 over FF
+4,shift_m10,1000000,none,limit_W_G1_minus_W,0.000915557,"W 5.61%, W_G1 5.70%, W_fixedFF 5.75%"
+4,shift_m10,1000000,none,sep_W_G1_over_W_median,0.966675,range 0.955-0.980 over FF
+4,shift_m10,2500000,none,limit_W_G1_minus_W,0.00184541,"W 3.30%, W_G1 3.49%, W_fixedFF 3.55%"
+4,shift_m10,2500000,none,sep_W_G1_over_W_median,0.966612,range 0.957-0.975 over FF
+4,shift_m10,5000000,none,limit_W_G1_minus_W,0.000929772,"W 2.47%, W_G1 2.56%, W_fixedFF 2.64%"
+4,shift_m10,5000000,none,sep_W_G1_over_W_median,0.967291,range 0.954-0.979 over FF
+4,shift_m10,10000000,none,limit_W_G1_minus_W,0.000135578,"W 1.88%, W_G1 1.89%, W_fixedFF 1.91%"
+4,shift_m10,10000000,none,sep_W_G1_over_W_median,0.965843,range 0.956-0.980 over FF
+4,shift_m10,1000000,low,limit_W_G1_minus_W,0.000918068,"W 5.65%, W_G1 5.74%, W_fixedFF 5.77%"
+4,shift_m10,1000000,low,sep_W_G1_over_W_median,0.959539,range 0.939-0.977 over FF
+4,shift_m10,2500000,low,limit_W_G1_minus_W,0.00194137,"W 3.39%, W_G1 3.59%, W_fixedFF 3.65%"
+4,shift_m10,2500000,low,sep_W_G1_over_W_median,0.959595,range 0.950-0.969 over FF
+4,shift_m10,5000000,low,limit_W_G1_minus_W,0.00193768,"W 2.44%, W_G1 2.63%, W_fixedFF 2.71%"
+4,shift_m10,5000000,low,sep_W_G1_over_W_median,0.955094,range 0.940-0.965 over FF
+4,shift_m10,10000000,low,limit_W_G1_minus_W,0.000264354,"W 1.90%, W_G1 1.92%, W_fixedFF 1.94%"
+4,shift_m10,10000000,low,sep_W_G1_over_W_median,0.939546,range 0.928-0.957 over FF
+4,shift_m10,1000000,realistic,limit_W_G1_minus_W,0.00124735,"W 5.75%, W_G1 5.87%, W_fixedFF 5.90%"
+4,shift_m10,1000000,realistic,sep_W_G1_over_W_median,0.950991,range 0.936-0.961 over FF
+4,shift_m10,2500000,realistic,limit_W_G1_minus_W,0.00201917,"W 3.59%, W_G1 3.80%, W_fixedFF 3.87%"
+4,shift_m10,2500000,realistic,sep_W_G1_over_W_median,0.931293,range 0.914-0.951 over FF
+4,shift_m10,5000000,realistic,limit_W_G1_minus_W,0.0014544,"W 2.74%, W_G1 2.89%, W_fixedFF 2.94%"
+4,shift_m10,5000000,realistic,sep_W_G1_over_W_median,0.909338,range 0.888-0.932 over FF
+4,shift_m10,10000000,realistic,limit_W_G1_minus_W,0.00416471,"W 1.96%, W_G1 2.37%, W_fixedFF 2.62%"
+4,shift_m10,10000000,realistic,sep_W_G1_over_W_median,0.876334,range 0.857-0.908 over FF
+4,shift_m5,1000000,none,limit_W_G1_minus_W,0.000933651,"W 5.90%, W_G1 5.99%, W_fixedFF 6.06%"
+4,shift_m5,1000000,none,sep_W_G1_over_W_median,0.963344,range 0.940-0.983 over FF
+4,shift_m5,2500000,none,limit_W_G1_minus_W,0.00134457,"W 3.69%, W_G1 3.83%, W_fixedFF 3.86%"
+4,shift_m5,2500000,none,sep_W_G1_over_W_median,0.960029,range 0.937-0.981 over FF
+4,shift_m5,5000000,none,limit_W_G1_minus_W,0.000785755,"W 2.70%, W_G1 2.78%, W_fixedFF 2.80%"
+4,shift_m5,5000000,none,sep_W_G1_over_W_median,0.961505,range 0.942-0.982 over FF
+4,shift_m5,10000000,none,limit_W_G1_minus_W,0.000117516,"W 1.92%, W_G1 1.94%, W_fixedFF 1.94%"
+4,shift_m5,10000000,none,sep_W_G1_over_W_median,0.964558,range 0.945-0.982 over FF
+4,shift_m5,1000000,low,limit_W_G1_minus_W,0.00117833,"W 5.86%, W_G1 5.97%, W_fixedFF 5.99%"
+4,shift_m5,1000000,low,sep_W_G1_over_W_median,0.962491,range 0.941-0.982 over FF
+4,shift_m5,2500000,low,limit_W_G1_minus_W,0.00133877,"W 3.75%, W_G1 3.88%, W_fixedFF 3.92%"
+4,shift_m5,2500000,low,sep_W_G1_over_W_median,0.959541,range 0.941-0.976 over FF
+4,shift_m5,5000000,low,limit_W_G1_minus_W,0.00103597,"W 2.72%, W_G1 2.82%, W_fixedFF 2.85%"
+4,shift_m5,5000000,low,sep_W_G1_over_W_median,0.956522,range 0.933-0.973 over FF
+4,shift_m5,10000000,low,limit_W_G1_minus_W,0.000373248,"W 1.93%, W_G1 1.97%, W_fixedFF 1.98%"
+4,shift_m5,10000000,low,sep_W_G1_over_W_median,0.945469,range 0.924-0.972 over FF
+4,shift_m5,1000000,realistic,limit_W_G1_minus_W,0.00256768,"W 5.91%, W_G1 6.17%, W_fixedFF 6.41%"
+4,shift_m5,1000000,realistic,sep_W_G1_over_W_median,0.956101,range 0.938-0.974 over FF
+4,shift_m5,2500000,realistic,limit_W_G1_minus_W,0.00131574,"W 3.85%, W_G1 3.99%, W_fixedFF 4.28%"
+4,shift_m5,2500000,realistic,sep_W_G1_over_W_median,0.937695,range 0.918-0.967 over FF
+4,shift_m5,5000000,realistic,limit_W_G1_minus_W,0.00081969,"W 2.90%, W_G1 2.98%, W_fixedFF 3.12%"
+4,shift_m5,5000000,realistic,sep_W_G1_over_W_median,0.925809,range 0.897-0.952 over FF
+4,shift_m5,10000000,realistic,limit_W_G1_minus_W,0.00381771,"W 2.38%, W_G1 2.76%, W_fixedFF 2.82%"
+4,shift_m5,10000000,realistic,sep_W_G1_over_W_median,0.904255,range 0.877-0.939 over FF
+4,shift_p5,1000000,none,limit_W_G1_minus_W,0.00201713,"W 7.52%, W_G1 7.72%, W_fixedFF 7.68%"
+4,shift_p5,1000000,none,sep_W_G1_over_W_median,0.960768,range 0.949-0.976 over FF
+4,shift_p5,2500000,none,limit_W_G1_minus_W,0.00216804,"W 5.04%, W_G1 5.26%, W_fixedFF 5.21%"
+4,shift_p5,2500000,none,sep_W_G1_over_W_median,0.96277,range 0.939-0.976 over FF
+4,shift_p5,5000000,none,limit_W_G1_minus_W,0.00309106,"W 2.98%, W_G1 3.29%, W_fixedFF 3.25%"
+4,shift_p5,5000000,none,sep_W_G1_over_W_median,0.959379,range 0.944-0.980 over FF
+4,shift_p5,10000000,none,limit_W_G1_minus_W,0.00217305,"W 2.43%, W_G1 2.65%, W_fixedFF 2.62%"
+4,shift_p5,10000000,none,sep_W_G1_over_W_median,0.958772,range 0.947-0.976 over FF
+4,shift_p5,1000000,low,limit_W_G1_minus_W,0.00166688,"W 7.58%, W_G1 7.74%, W_fixedFF 7.74%"
+4,shift_p5,1000000,low,sep_W_G1_over_W_median,0.963187,range 0.933-0.976 over FF
+4,shift_p5,2500000,low,limit_W_G1_minus_W,0.00141798,"W 5.23%, W_G1 5.37%, W_fixedFF 5.37%"
+4,shift_p5,2500000,low,sep_W_G1_over_W_median,0.960825,range 0.952-0.976 over FF
+4,shift_p5,5000000,low,limit_W_G1_minus_W,0.00133621,"W 3.50%, W_G1 3.63%, W_fixedFF 3.61%"
+4,shift_p5,5000000,low,sep_W_G1_over_W_median,0.966107,range 0.954-0.983 over FF
+4,shift_p5,10000000,low,limit_W_G1_minus_W,0.000729313,"W 2.71%, W_G1 2.78%, W_fixedFF 2.78%"
+4,shift_p5,10000000,low,sep_W_G1_over_W_median,0.972877,range 0.958-0.984 over FF
+4,shift_p5,1000000,realistic,limit_W_G1_minus_W,0.000811225,"W 7.79%, W_G1 7.87%, W_fixedFF 7.87%"
+4,shift_p5,1000000,realistic,sep_W_G1_over_W_median,0.966429,range 0.950-0.983 over FF
+4,shift_p5,2500000,realistic,limit_W_G1_minus_W,0.000657228,"W 5.60%, W_G1 5.66%, W_fixedFF 5.66%"
+4,shift_p5,2500000,realistic,sep_W_G1_over_W_median,0.971988,range 0.963-0.987 over FF
+4,shift_p5,5000000,realistic,limit_W_G1_minus_W,0.000460715,"W 3.90%, W_G1 3.94%, W_fixedFF 3.96%"
+4,shift_p5,5000000,realistic,sep_W_G1_over_W_median,0.981442,range 0.972-0.997 over FF
+4,shift_p5,10000000,realistic,limit_W_G1_minus_W,0.00016339,"W 3.39%, W_G1 3.41%, W_fixedFF 3.51%"
+4,shift_p5,10000000,realistic,sep_W_G1_over_W_median,0.995536,range 0.982-1.006 over FF
+4,shift_p10,1000000,none,limit_W_G1_minus_W,0.0079214,"W 7.93%, W_G1 8.72%, W_fixedFF 8.67%"
+4,shift_p10,1000000,none,sep_W_G1_over_W_median,0.940304,range 0.933-0.950 over FF
+4,shift_p10,2500000,none,limit_W_G1_minus_W,0.00130368,"W 5.56%, W_G1 5.69%, W_fixedFF 5.67%"
+4,shift_p10,2500000,none,sep_W_G1_over_W_median,0.942858,range 0.924-0.956 over FF
+4,shift_p10,5000000,none,limit_W_G1_minus_W,0.0015022,"W 3.69%, W_G1 3.84%, W_fixedFF 3.80%"
+4,shift_p10,5000000,none,sep_W_G1_over_W_median,0.940821,range 0.932-0.954 over FF
+4,shift_p10,10000000,none,limit_W_G1_minus_W,0.00072919,"W 2.77%, W_G1 2.84%, W_fixedFF 2.82%"
+4,shift_p10,10000000,none,sep_W_G1_over_W_median,0.940891,range 0.927-0.948 over FF
+4,shift_p10,1000000,low,limit_W_G1_minus_W,0.00466309,"W 7.92%, W_G1 8.38%, W_fixedFF 8.28%"
+4,shift_p10,1000000,low,sep_W_G1_over_W_median,0.945235,range 0.913-0.955 over FF
+4,shift_p10,2500000,low,limit_W_G1_minus_W,0.00154751,"W 5.59%, W_G1 5.75%, W_fixedFF 5.71%"
+4,shift_p10,2500000,low,sep_W_G1_over_W_median,0.947847,range 0.940-0.957 over FF
+4,shift_p10,5000000,low,limit_W_G1_minus_W,0.00105275,"W 3.80%, W_G1 3.91%, W_fixedFF 3.88%"
+4,shift_p10,5000000,low,sep_W_G1_over_W_median,0.953059,range 0.943-0.964 over FF
+4,shift_p10,10000000,low,limit_W_G1_minus_W,0.000379413,"W 2.88%, W_G1 2.91%, W_fixedFF 2.90%"
+4,shift_p10,10000000,low,sep_W_G1_over_W_median,0.968078,range 0.964-0.972 over FF
+4,shift_p10,1000000,realistic,limit_W_G1_minus_W,0.00408406,"W 8.71%, W_G1 9.12%, W_fixedFF 9.08%"
+4,shift_p10,1000000,realistic,sep_W_G1_over_W_median,0.959065,range 0.937-0.972 over FF
+4,shift_p10,2500000,realistic,limit_W_G1_minus_W,0.000527898,"W 5.86%, W_G1 5.92%, W_fixedFF 5.90%"
+4,shift_p10,2500000,realistic,sep_W_G1_over_W_median,0.97573,range 0.957-0.981 over FF
+4,shift_p10,5000000,realistic,limit_W_G1_minus_W,0.00155852,"W 4.82%, W_G1 4.98%, W_fixedFF 4.97%"
+4,shift_p10,5000000,realistic,sep_W_G1_over_W_median,0.997211,range 0.991-0.999 over FF
+4,shift_p10,10000000,realistic,limit_W_G1_minus_W,-0.000600843,"W 3.78%, W_G1 3.72%, W_fixedFF 3.75%"
+4,shift_p10,10000000,realistic,sep_W_G1_over_W_median,1.02366,range 1.019-1.028 over FF
+4,blend50,1000000,none,limit_W_G1_minus_W,0.00322682,"W 7.93%, W_G1 8.25%, W_fixedFF 8.12%"
+4,blend50,1000000,none,sep_W_G1_over_W_median,0.956692,range 0.928-0.972 over FF
+4,blend50,2500000,none,limit_W_G1_minus_W,0.000881329,"W 5.55%, W_G1 5.64%, W_fixedFF 5.61%"
+4,blend50,2500000,none,sep_W_G1_over_W_median,0.95941,range 0.953-0.966 over FF
+4,blend50,5000000,none,limit_W_G1_minus_W,0.000943803,"W 3.72%, W_G1 3.82%, W_fixedFF 3.79%"
+4,blend50,5000000,none,sep_W_G1_over_W_median,0.958581,range 0.953-0.967 over FF
+4,blend50,10000000,none,limit_W_G1_minus_W,0.00037198,"W 2.79%, W_G1 2.83%, W_fixedFF 2.81%"
+4,blend50,10000000,none,sep_W_G1_over_W_median,0.958906,range 0.953-0.970 over FF
+4,blend50,1000000,low,limit_W_G1_minus_W,0.00315825,"W 7.94%, W_G1 8.26%, W_fixedFF 8.23%"
+4,blend50,1000000,low,sep_W_G1_over_W_median,0.9611,range 0.954-0.975 over FF
+4,blend50,2500000,low,limit_W_G1_minus_W,0.00114031,"W 5.58%, W_G1 5.70%, W_fixedFF 5.67%"
+4,blend50,2500000,low,sep_W_G1_over_W_median,0.968132,range 0.963-0.976 over FF
+4,blend50,5000000,low,limit_W_G1_minus_W,0.000643487,"W 3.80%, W_G1 3.87%, W_fixedFF 3.84%"
+4,blend50,5000000,low,sep_W_G1_over_W_median,0.974964,range 0.963-0.981 over FF
+4,blend50,10000000,low,limit_W_G1_minus_W,0.000174087,"W 2.88%, W_G1 2.90%, W_fixedFF 2.89%"
+4,blend50,10000000,low,sep_W_G1_over_W_median,0.985895,range 0.980-0.990 over FF
+4,blend50,1000000,realistic,limit_W_G1_minus_W,0.00275084,"W 8.59%, W_G1 8.87%, W_fixedFF 8.83%"
+4,blend50,1000000,realistic,sep_W_G1_over_W_median,0.972956,range 0.956-0.980 over FF
+4,blend50,2500000,realistic,limit_W_G1_minus_W,7.12513e-05,"W 5.86%, W_G1 5.87%, W_fixedFF 5.86%"
+4,blend50,2500000,realistic,sep_W_G1_over_W_median,0.999885,range 0.989-1.004 over FF
+4,blend50,5000000,realistic,limit_W_G1_minus_W,-0.00189312,"W 5.23%, W_G1 5.04%, W_fixedFF 5.04%"
+4,blend50,5000000,realistic,sep_W_G1_over_W_median,1.01923,range 1.014-1.026 over FF
+4,blend50,10000000,realistic,limit_W_G1_minus_W,-0.00110465,"W 3.86%, W_G1 3.75%, W_fixedFF 3.77%"
+4,blend50,10000000,realistic,sep_W_G1_over_W_median,1.05112,range 1.037-1.058 over FF
+5,G1,1000000,none,limit_B_minus_W_G1,0.00885495,"W_G1 better: B 7.92%, W_G1 7.03%"
+5,G1,2500000,none,limit_B_minus_W_G1,0.0108748,"W_G1 better: B 5.61%, W_G1 4.52%"
+5,G1,5000000,none,limit_B_minus_W_G1,0.00792812,"W_G1 better: B 3.74%, W_G1 2.94%"
+5,G1,10000000,none,limit_B_minus_W_G1,0.0074351,"W_G1 better: B 2.73%, W_G1 1.99%"
+5,G1,1000000,low,limit_B_minus_W_G1,0.0075967,"W_G1 better: B 7.94%, W_G1 7.18%"
+5,G1,2500000,low,limit_B_minus_W_G1,0.0102887,"W_G1 better: B 5.49%, W_G1 4.46%"
+5,G1,5000000,low,limit_B_minus_W_G1,0.00739713,"W_G1 better: B 3.70%, W_G1 2.96%"
+5,G1,10000000,low,limit_B_minus_W_G1,0.00313365,"W_G1 better: B 2.77%, W_G1 2.45%"
+5,G1,1000000,realistic,limit_B_minus_W_G1,0.00989031,"W_G1 better: B 8.32%, W_G1 7.33%"
+5,G1,2500000,realistic,limit_B_minus_W_G1,0.00511361,"W_G1 better: B 5.71%, W_G1 5.20%"
+5,G1,5000000,realistic,limit_B_minus_W_G1,0.00169409,"W_G1 better: B 3.86%, W_G1 3.69%"
+5,G1,10000000,realistic,limit_B_minus_W_G1,0.000243186,"equal: B 2.91%, W_G1 2.89%"
+5,shift_m10,1000000,none,limit_B_minus_W_G1,0.00823678,"W_G1 better: B 6.52%, W_G1 5.70%"
+5,shift_m10,2500000,none,limit_B_minus_W_G1,0.00404383,"W_G1 better: B 3.89%, W_G1 3.49%"
+5,shift_m10,5000000,none,limit_B_minus_W_G1,0.00283546,"W_G1 better: B 2.85%, W_G1 2.56%"
+5,shift_m10,10000000,none,limit_B_minus_W_G1,0.000703877,"equal: B 1.96%, W_G1 1.89%"
+5,shift_m10,1000000,low,limit_B_minus_W_G1,0.00782893,"W_G1 better: B 6.52%, W_G1 5.74%"
+5,shift_m10,2500000,low,limit_B_minus_W_G1,0.00343273,"W_G1 better: B 3.93%, W_G1 3.59%"
+5,shift_m10,5000000,low,limit_B_minus_W_G1,0.00216244,"W_G1 better: B 2.85%, W_G1 2.63%"
+5,shift_m10,10000000,low,limit_B_minus_W_G1,0.000445957,"equal: B 1.97%, W_G1 1.92%"
+5,shift_m10,1000000,realistic,limit_B_minus_W_G1,0.00895477,"W_G1 better: B 6.77%, W_G1 5.87%"
+5,shift_m10,2500000,realistic,limit_B_minus_W_G1,0.00178488,"W_G1 better: B 3.98%, W_G1 3.80%"
+5,shift_m10,5000000,realistic,limit_B_minus_W_G1,0.000553801,"equal: B 2.95%, W_G1 2.89%"
+5,shift_m10,10000000,realistic,limit_B_minus_W_G1,0.000115031,"equal: B 2.39%, W_G1 2.37%"
+5,shift_m5,1000000,none,limit_B_minus_W_G1,0.0149005,"W_G1 better: B 7.48%, W_G1 5.99%"
+5,shift_m5,2500000,none,limit_B_minus_W_G1,0.0109864,"W_G1 better: B 4.92%, W_G1 3.83%"
+5,shift_m5,5000000,none,limit_B_minus_W_G1,0.00199673,"W_G1 better: B 2.97%, W_G1 2.78%"
+5,shift_m5,10000000,none,limit_B_minus_W_G1,0.00349956,"W_G1 better: B 2.29%, W_G1 1.94%"
+5,shift_m5,1000000,low,limit_B_minus_W_G1,0.0142669,"W_G1 better: B 7.40%, W_G1 5.97%"
+5,shift_m5,2500000,low,limit_B_minus_W_G1,0.0114172,"W_G1 better: B 5.02%, W_G1 3.88%"
+5,shift_m5,5000000,low,limit_B_minus_W_G1,0.00310792,"W_G1 better: B 3.13%, W_G1 2.82%"
+5,shift_m5,10000000,low,limit_B_minus_W_G1,0.0051141,"W_G1 better: B 2.48%, W_G1 1.97%"
+5,shift_m5,1000000,realistic,limit_B_minus_W_G1,0.0141959,"W_G1 better: B 7.59%, W_G1 6.17%"
+5,shift_m5,2500000,realistic,limit_B_minus_W_G1,0.0118977,"W_G1 better: B 5.17%, W_G1 3.99%"
+5,shift_m5,5000000,realistic,limit_B_minus_W_G1,0.00440661,"W_G1 better: B 3.42%, W_G1 2.98%"
+5,shift_m5,10000000,realistic,limit_B_minus_W_G1,4.24259e-05,"equal: B 2.77%, W_G1 2.76%"
+5,shift_p5,1000000,none,limit_B_minus_W_G1,0.018993,"W_G1 better: B 9.62%, W_G1 7.72%"
+5,shift_p5,2500000,none,limit_B_minus_W_G1,0.00682537,"W_G1 better: B 5.94%, W_G1 5.26%"
+5,shift_p5,5000000,none,limit_B_minus_W_G1,0.00691382,"W_G1 better: B 3.98%, W_G1 3.29%"
+5,shift_p5,10000000,none,limit_B_minus_W_G1,0.00280056,"W_G1 better: B 2.93%, W_G1 2.65%"
+5,shift_p5,1000000,low,limit_B_minus_W_G1,0.0181085,"W_G1 better: B 9.55%, W_G1 7.74%"
+5,shift_p5,2500000,low,limit_B_minus_W_G1,0.00552461,"W_G1 better: B 5.93%, W_G1 5.37%"
+5,shift_p5,5000000,low,limit_B_minus_W_G1,0.00753476,"W_G1 better: B 4.39%, W_G1 3.63%"
+5,shift_p5,10000000,low,limit_B_minus_W_G1,0.00176987,"W_G1 better: B 2.96%, W_G1 2.78%"
+5,shift_p5,1000000,realistic,limit_B_minus_W_G1,0.0190155,"W_G1 better: B 9.77%, W_G1 7.87%"
+5,shift_p5,2500000,realistic,limit_B_minus_W_G1,0.00538983,"W_G1 better: B 6.20%, W_G1 5.66%"
+5,shift_p5,5000000,realistic,limit_B_minus_W_G1,0.0102719,"W_G1 better: B 4.97%, W_G1 3.94%"
+5,shift_p5,10000000,realistic,limit_B_minus_W_G1,0.00100737,"W_G1 better: B 3.51%, W_G1 3.41%"
+5,shift_p10,1000000,none,limit_B_minus_W_G1,0.0390017,"W_G1 better: B 12.62%, W_G1 8.72%"
+5,shift_p10,2500000,none,limit_B_minus_W_G1,0.0163174,"W_G1 better: B 7.32%, W_G1 5.69%"
+5,shift_p10,5000000,none,limit_B_minus_W_G1,0.0166303,"W_G1 better: B 5.50%, W_G1 3.84%"
+5,shift_p10,10000000,none,limit_B_minus_W_G1,0.00809118,"W_G1 better: B 3.65%, W_G1 2.84%"
+5,shift_p10,1000000,low,limit_B_minus_W_G1,0.0477328,"W_G1 better: B 13.16%, W_G1 8.38%"
+5,shift_p10,2500000,low,limit_B_minus_W_G1,0.0168364,"W_G1 better: B 7.43%, W_G1 5.75%"
+5,shift_p10,5000000,low,limit_B_minus_W_G1,0.0161568,"W_G1 better: B 5.52%, W_G1 3.91%"
+5,shift_p10,10000000,low,limit_B_minus_W_G1,0.00716483,"W_G1 better: B 3.63%, W_G1 2.91%"
+5,shift_p10,1000000,realistic,limit_B_minus_W_G1,0.0391831,"W_G1 better: B 13.04%, W_G1 9.12%"
+5,shift_p10,2500000,realistic,limit_B_minus_W_G1,0.0166709,"W_G1 better: B 7.58%, W_G1 5.92%"
+5,shift_p10,5000000,realistic,limit_B_minus_W_G1,0.00614369,"W_G1 better: B 5.59%, W_G1 4.98%"
+5,shift_p10,10000000,realistic,limit_B_minus_W_G1,0.00165063,"W_G1 better: B 3.88%, W_G1 3.72%"
+5,blend50,1000000,none,limit_B_minus_W_G1,0.0429596,"W_G1 better: B 12.55%, W_G1 8.25%"
+5,blend50,2500000,none,limit_B_minus_W_G1,0.0184526,"W_G1 better: B 7.48%, W_G1 5.64%"
+5,blend50,5000000,none,limit_B_minus_W_G1,0.0164885,"W_G1 better: B 5.46%, W_G1 3.82%"
+5,blend50,10000000,none,limit_B_minus_W_G1,0.00853862,"W_G1 better: B 3.68%, W_G1 2.83%"
+5,blend50,1000000,low,limit_B_minus_W_G1,0.0491055,"W_G1 better: B 13.17%, W_G1 8.26%"
+5,blend50,2500000,low,limit_B_minus_W_G1,0.0184365,"W_G1 better: B 7.54%, W_G1 5.70%"
+5,blend50,5000000,low,limit_B_minus_W_G1,0.0175634,"W_G1 better: B 5.62%, W_G1 3.87%"
+5,blend50,10000000,low,limit_B_minus_W_G1,0.00842256,"W_G1 better: B 3.74%, W_G1 2.90%"
+5,blend50,1000000,realistic,limit_B_minus_W_G1,0.0428973,"W_G1 better: B 13.15%, W_G1 8.87%"
+5,blend50,2500000,realistic,limit_B_minus_W_G1,0.0175863,"W_G1 better: B 7.63%, W_G1 5.87%"
+5,blend50,5000000,realistic,limit_B_minus_W_G1,0.00715146,"W_G1 better: B 5.75%, W_G1 5.04%"
+5,blend50,10000000,realistic,limit_B_minus_W_G1,0.00228218,"W_G1 better: B 3.98%, W_G1 3.75%"
+6,G1,all,all,pooled_fpr_A,0.00141771,"1361/960000 = 0.142% [0.134, 0.149]; CI contains the target 0.135%"
+6,G1,all,all,pooled_fpr_W,0.00140938,"1353/960000 = 0.141% [0.134, 0.149]; CI contains the target 0.135%"
+6,G1,all,all,pooled_fpr_W_G1,0.00140938,"1353/960000 = 0.141% [0.134, 0.149]; CI contains the target 0.135%"
+6,G1,all,all,pooled_fpr_W_fixedFF,0.001425,"1368/960000 = 0.142% [0.135, 0.150]; CI above the target 0.135%"
+6,G1,all,all,pooled_fpr_C2,0.000151042,"145/960000 = 0.015% [0.013, 0.018]; CI below the target 0.135%"
+6,shift_m10,all,all,pooled_fpr_A,0.00138125,"1326/960000 = 0.138% [0.131, 0.146]; CI contains the target 0.135%"
+6,shift_m10,all,all,pooled_fpr_W,0.00141458,"1358/960000 = 0.141% [0.134, 0.149]; CI contains the target 0.135%"
+6,shift_m10,all,all,pooled_fpr_W_G1,0.00142917,"1372/960000 = 0.143% [0.136, 0.151]; CI above the target 0.135%"
+6,shift_m10,all,all,pooled_fpr_W_fixedFF,0.00143958,"1382/960000 = 0.144% [0.137, 0.152]; CI above the target 0.135%"
+6,shift_m10,all,all,pooled_fpr_C2,0.000202083,"194/960000 = 0.020% [0.018, 0.023]; CI below the target 0.135%"
+6,shift_m5,all,all,pooled_fpr_A,0.00143958,"1382/960000 = 0.144% [0.137, 0.152]; CI above the target 0.135%"
+6,shift_m5,all,all,pooled_fpr_W,0.00160625,"1542/960000 = 0.161% [0.153, 0.169]; CI above the target 0.135%"
+6,shift_m5,all,all,pooled_fpr_W_G1,0.00160833,"1544/960000 = 0.161% [0.153, 0.169]; CI above the target 0.135%"
+6,shift_m5,all,all,pooled_fpr_W_fixedFF,0.00159167,"1528/960000 = 0.159% [0.151, 0.167]; CI above the target 0.135%"
+6,shift_m5,all,all,pooled_fpr_C2,0.000134375,"129/960000 = 0.013% [0.011, 0.016]; CI below the target 0.135%"
+6,shift_p5,all,all,pooled_fpr_A,0.00147083,"1412/960000 = 0.147% [0.140, 0.155]; CI above the target 0.135%"
+6,shift_p5,all,all,pooled_fpr_W,0.00143958,"1382/960000 = 0.144% [0.137, 0.152]; CI above the target 0.135%"
+6,shift_p5,all,all,pooled_fpr_W_G1,0.00145729,"1399/960000 = 0.146% [0.138, 0.154]; CI above the target 0.135%"
+6,shift_p5,all,all,pooled_fpr_W_fixedFF,0.00144271,"1385/960000 = 0.144% [0.137, 0.152]; CI above the target 0.135%"
+6,shift_p5,all,all,pooled_fpr_C2,0.000188542,"181/960000 = 0.019% [0.016, 0.022]; CI below the target 0.135%"
+6,shift_p10,all,all,pooled_fpr_A,0.00144688,"1389/960000 = 0.145% [0.137, 0.152]; CI above the target 0.135%"
+6,shift_p10,all,all,pooled_fpr_W,0.00140625,"1350/960000 = 0.141% [0.133, 0.148]; CI contains the target 0.135%"
+6,shift_p10,all,all,pooled_fpr_W_G1,0.00142708,"1370/960000 = 0.143% [0.135, 0.150]; CI above the target 0.135%"
+6,shift_p10,all,all,pooled_fpr_W_fixedFF,0.00138542,"1330/960000 = 0.139% [0.131, 0.146]; CI contains the target 0.135%"
+6,shift_p10,all,all,pooled_fpr_C2,0.000210417,"202/960000 = 0.021% [0.018, 0.024]; CI below the target 0.135%"
+6,blend50,all,all,pooled_fpr_A,0.00143021,"1373/960000 = 0.143% [0.136, 0.151]; CI above the target 0.135%"
+6,blend50,all,all,pooled_fpr_W,0.00146458,"1406/960000 = 0.146% [0.139, 0.154]; CI above the target 0.135%"
+6,blend50,all,all,pooled_fpr_W_G1,0.00151563,"1455/960000 = 0.152% [0.144, 0.160]; CI above the target 0.135%"
+6,blend50,all,all,pooled_fpr_W_fixedFF,0.00150625,"1446/960000 = 0.151% [0.143, 0.159]; CI above the target 0.135%"
+6,blend50,all,all,pooled_fpr_C2,0.000145833,"140/960000 = 0.015% [0.012, 0.017]; CI below the target 0.135%"
+7,G1,all,all,bopt_cutoff_median,155,"145 bp: 4, 150 bp: 8, 155 bp: 46, 160 bp: 34, 165 bp: 4"
+7,G1,all,none,bopt_cutoff_median,160,"155 bp: 12, 160 bp: 16, 165 bp: 4"
+7,G1,all,low,bopt_cutoff_median,155,"155 bp: 20, 160 bp: 12"
+7,G1,all,realistic,bopt_cutoff_median,155,"145 bp: 4, 150 bp: 8, 155 bp: 14, 160 bp: 6"
+7,shift_m10,all,all,bopt_cutoff_median,145,"140 bp: 34, 145 bp: 21, 150 bp: 15, 155 bp: 21, 160 bp: 5"
+7,shift_m10,all,none,bopt_cutoff_median,150,"140 bp: 8, 145 bp: 7, 150 bp: 5, 155 bp: 8, 160 bp: 4"
+7,shift_m10,all,low,bopt_cutoff_median,147.5,"140 bp: 10, 145 bp: 6, 150 bp: 6, 155 bp: 9, 160 bp: 1"
+7,shift_m10,all,realistic,bopt_cutoff_median,142.5,"140 bp: 16, 145 bp: 8, 150 bp: 4, 155 bp: 4"
+7,shift_m5,all,all,bopt_cutoff_median,150,"140 bp: 8, 145 bp: 2, 150 bp: 43, 155 bp: 21, 160 bp: 22"
+7,shift_m5,all,none,bopt_cutoff_median,155,"140 bp: 1, 150 bp: 13, 155 bp: 7, 160 bp: 11"
+7,shift_m5,all,low,bopt_cutoff_median,152.5,"150 bp: 16, 155 bp: 7, 160 bp: 9"
+7,shift_m5,all,realistic,bopt_cutoff_median,150,"140 bp: 7, 145 bp: 2, 150 bp: 14, 155 bp: 7, 160 bp: 2"
+7,shift_p5,all,all,bopt_cutoff_median,160,"150 bp: 1, 155 bp: 11, 160 bp: 78, 165 bp: 4, 170 bp: 2"
+7,shift_p5,all,none,bopt_cutoff_median,160,"155 bp: 2, 160 bp: 26, 165 bp: 3, 170 bp: 1"
+7,shift_p5,all,low,bopt_cutoff_median,160,"160 bp: 31, 165 bp: 1"
+7,shift_p5,all,realistic,bopt_cutoff_median,160,"150 bp: 1, 155 bp: 9, 160 bp: 21, 170 bp: 1"
+7,shift_p10,all,all,bopt_cutoff_median,165,"155 bp: 4, 160 bp: 38, 165 bp: 41, 170 bp: 13"
+7,shift_p10,all,none,bopt_cutoff_median,165,"160 bp: 6, 165 bp: 19, 170 bp: 7"
+7,shift_p10,all,low,bopt_cutoff_median,165,"160 bp: 11, 165 bp: 15, 170 bp: 6"
+7,shift_p10,all,realistic,bopt_cutoff_median,160,"155 bp: 4, 160 bp: 21, 165 bp: 7"
+7,blend50,all,all,bopt_cutoff_median,170,"155 bp: 2, 160 bp: 6, 165 bp: 1, 170 bp: 87"
+7,blend50,all,none,bopt_cutoff_median,170,170 bp: 32
+7,blend50,all,low,bopt_cutoff_median,170,"165 bp: 1, 170 bp: 31"
+7,blend50,all,realistic,bopt_cutoff_median,170,"155 bp: 2, 160 bp: 6, 170 bp: 24"

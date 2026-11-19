@@ -5,6 +5,7 @@
 #         bash scripts/download_reference.sh   (GRCh38 analysis set + Bowtie2 index, ~5 GB)
 # Run from anywhere:  bash scripts/run_all.sh
 #                     bash scripts/run_all.sh --skip-pool   (use an existing data/processed/pool as is)
+#                     bash scripts/run_all.sh --robustness  (also rerun the Task 07 fetal-profile scenarios)
 #
 # Expected run times (measured on an Apple-silicon MacBook, macOS 26, nipt env) are noted per step;
 # total ~45 min from scratch, ~13 min when the pool already exists (measured: 793 s). Every step is deterministic (seeds
@@ -15,10 +16,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."   # repo root, so config paths resolve
 
 SKIP_POOL=0
+ROBUSTNESS=0
 for arg in "$@"; do
   case "$arg" in
     --skip-pool) SKIP_POOL=1 ;;
-    *) echo "usage: bash scripts/run_all.sh [--skip-pool]" >&2; exit 1 ;;
+    --robustness) ROBUSTNESS=1 ;;
+    *) echo "usage: bash scripts/run_all.sh [--skip-pool] [--robustness]" >&2; exit 1 ;;
   esac
 done
 
@@ -72,12 +75,12 @@ for noise in g["noise_sigma"]:
             print(ff, depth, noise)
 '
 }
-run_grid() {
+run_grid() {   # run_grid [--scenario NAME]: every grid condition, main analysis or one scenario
   local n=0
   while read -r ff depth noise; do
     n=$((n + 1))
     echo "    condition $n: FF $ff, depth $depth, noise $noise"
-    python -u -m src.evaluate.run_condition --ff "$ff" --depth "$depth" --noise "$noise" > /dev/null
+    python -u -m src.evaluate.run_condition --ff "$ff" --depth "$depth" --noise "$noise" "$@" > /dev/null
   done < <(grid_conditions)
 }
 step "full grid (96 conditions)" run_grid
@@ -102,6 +105,31 @@ step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
 step "Figure 5 + supplementary" python -m src.evaluate.figures.fig5_methods
 step "Figure S3 (unified model)" python -m src.evaluate.figures.figS_unified_model
 step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
+
+# --- 4b. Robustness to the fetal length profile (Task 07, decision #17) ---------------------------
+# Scenario inputs and the model's predictions (7A, 7C), no simulation: seconds
+step "robustness inputs and predictions" python -m src.evaluate.robustness_inputs
+# Optional (--robustness): the full grid and its evaluation for each scenario in robustness.fetal_profiles,
+# written to results/robustness/<NAME>/tables. Sequential time per scenario ~13 min (grid ~5.5 min, bootstrap
+# ~7.5 min, the rest seconds), ~65 min for all five here. The scenarios write to separate folders and do not
+# depend on each other, so they can also run in parallel (one job per scenario: ~14 min wall time for all five
+# on a 10-core Mac). Without --robustness the committed scenario tables are used as they are.
+if [ "$ROBUSTNESS" = 1 ]; then
+  for sc in $(python -c 'import yaml; print(*yaml.safe_load(open("config/config.yaml"))["robustness"]["fetal_profiles"])'); do
+    step "[$sc] full grid (96 conditions)" run_grid --scenario "$sc"
+    step "[$sc] detection limits" python -m src.evaluate.detection_limits --scenario "$sc"
+    step "[$sc] FPR check" python -m src.evaluate.fpr_check --scenario "$sc"
+    step "[$sc] bootstrap B - A" python -u -m src.evaluate.bootstrap_diff --scenario "$sc"
+    step "[$sc] break-even check" python -m src.evaluate.breakeven_check --scenario "$sc"
+    step "[$sc] unified model check" python -m src.evaluate.unified_model_check --scenario "$sc"
+    step "[$sc] rerun check" python -m src.evaluate.check_rerun --scenario "$sc"
+  done
+else
+  echo "==> robustness scenarios: skipped (no --robustness), using results/robustness as is"
+fi
+# Summary across scenarios (questions 1-7) and Fig. S4: seconds
+step "robustness summary" python -m src.evaluate.robustness_profiles
+step "Figure S4 (fetal profiles)" python -m src.evaluate.figures.figS_profiles
 # All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
 step "captions" python -m src.evaluate.captions
 

@@ -87,7 +87,9 @@ def main():
                 saved = results[np.isclose(results["ff"], ff) & (results["depth"] == depth)
                                 & (results["noise"] == str(noise))].set_index("method")["sens_at_fpr"]
                 for m in ("A", "B"):
-                    if not np.isclose(sens[m], saved[m], rtol=0, atol=1e-12):
+                    # compare as written: results_all.csv stores %.10g, so e.g. 0.0140833333333 is saved as
+                    # 0.01408333333 (an absolute tolerance would fail on such values)
+                    if f"{sens[m]:.10g}" != f"{saved[m]:.10g}":
                         raise ValueError(f"FF {ff} depth {depth} {noise}: sens_at_fpr({m}) = {sens[m]} "
                                          f"but results_all.csv has {saved[m]}")
                 diffs = bootstrap_diff(y, scores, target, np.random.default_rng(bootstrap_seed(config, ff, depth,
