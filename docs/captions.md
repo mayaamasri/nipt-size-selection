@@ -40,6 +40,12 @@ Output: `results/figures/figS_methods_low` · script: `src/evaluate/figures/fig5
 
 Figure S2. As Fig. 5, at low noise (σ = 0.15%).
 
+## Figure S3
+
+Output: `results/figures/figS_unified_model` · script: `src/evaluate/figures/figS_unified_model.py`
+
+Figure S3. One counting model for size selection and length weighting, FF 4%: ratio of standardised separations sep(method)/sep(A) for B (40–156 bp) and W (each fragment weighted by P(fetal | length) at the true FF). Points: simulation; lines: the unified model, in which every z-score method is a chr21 fraction with length weights u(l), and the break-even formula (decision #8) holds with an effective enrichment g_eff = E[u·w*]/(FF·E[u]) and an effective read fraction r_eff = E[u]²/E[u²]. Dashed: method = A. Over all 96 conditions, the median |relative error| is 0.50% for W (95th percentile 2.0%), 0.47% for W_fixedFF and 0.92% for B and the seven fixed cutoffs together; without the 7 conditions where A's separation is below 1, 0.45%, 0.45% and 0.87% (unified_model_summary.csv). At realistic noise, W's predicted ratio rises from 1.36 at 1M to 1.54 at 10M; the best possible linear weights for that noise would reach 1.70 at 10M, so W achieves 90% of the optimum there (and 100% without extra noise). Like W, the model uses the true length distributions.
+
 ## Table 1
 
 Output: `results/tables/table1_detection_limits.csv` · script: `src/evaluate/tables.py`

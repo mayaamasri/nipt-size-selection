@@ -109,12 +109,14 @@ python -m src.evaluate.check_rerun --ff 0.04 --depth 5000000 --noise realistic
 | `figures/fig3_b_minus_a` | `src/evaluate/figures/fig3_b_minus_a.py` | sens_at_fpr(B) − sens_at_fpr(A) heatmaps (from `tables/fig3_b_minus_a.csv`) |
 | `figures/fig4_breakeven` | `src/evaluate/figures/fig4_breakeven.py` | break-even formula vs simulation at FF 4% (from `tables/breakeven_check.csv`) |
 | `figures/fig5_methods`, `figS_methods_none`, `figS_methods_low` | `src/evaluate/figures/fig5_methods.py` | sensitivity at FPR 0.135% by method, realistic / no / low noise |
+| `figures/figS_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
 | `tables/results_all.csv` and per-condition tables | `src/evaluate/run_condition.py` | all metrics per condition × method |
 | `tables/detection_limits.csv` | `src/evaluate/detection_limits.py` | detection limits for all 14 methods |
 | `tables/fpr_check.csv` | `src/evaluate/fpr_check.py` | pooled FPR vs target |
 | `tables/fig3_b_minus_a.csv` | `src/evaluate/bootstrap_diff.py` | B − A with paired-bootstrap SE and CI |
 | `tables/breakeven_check.csv`, `breakeven_summary.csv` | `src/evaluate/breakeven_check.py` | predicted vs observed separation ratios |
+| `tables/unified_model_check.csv`, `unified_model_summary.csv` | `src/evaluate/unified_model_check.py` | unified counting model (any length weighting) vs observed ratios for B, B_c, W, W_fixedFF; W vs the optimal weights (analytic) |
 | `tables/breakeven_ratio_noise.csv` | `src/evaluate/bootstrap_ratio.py` | bootstrap SD of the observed ratio (Fig. 4 caption) |
 | `tables/table1_detection_limits.csv` | `src/evaluate/tables.py` | Table 1 |
 | `tables/table2_realism_yang.csv` | `src/evaluate/tables.py` | Table 2 |

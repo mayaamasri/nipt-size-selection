@@ -90,6 +90,8 @@ step "FPR check" python -m src.evaluate.fpr_check
 step "bootstrap B - A" python -u -m src.evaluate.bootstrap_diff
 # Break-even formula vs simulation (decision #8, Fig. 4): seconds
 step "break-even check" python -m src.evaluate.breakeven_check
+# One counting model for B, B_c, W and W_fixedFF, plus W vs the optimal weights (Task 06, Fig. S3): ~2 s
+step "unified model check" python -m src.evaluate.unified_model_check
 # Paired bootstrap of the observed ratio sep(B_c)/sep(A) on 4 conditions (Fig. 4 caption): ~5 s
 step "bootstrap ratio" python -m src.evaluate.bootstrap_ratio
 
@@ -98,6 +100,7 @@ step "Figure 2" python -m src.evaluate.figures.fig2_inputs
 step "Figure 3" python -m src.evaluate.figures.fig3_b_minus_a
 step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
 step "Figure 5 + supplementary" python -m src.evaluate.figures.fig5_methods
+step "Figure S3 (unified model)" python -m src.evaluate.figures.figS_unified_model
 step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
 # All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
 step "captions" python -m src.evaluate.captions
