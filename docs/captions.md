@@ -62,7 +62,7 @@ Figure S5. Gain over A with extra noise on short fragments, FF 4%: ratio of stan
 
 Output: `results/tables/table1_detection_limits.csv` · script: `src/evaluate/tables.py`
 
-Table 1. Detection limits (FF at which sensitivity reaches 95% for the last time, decision #13) per depth and noise level: main estimate from the sensitivity at each method's own threshold, conservative estimate from its Wilson 95% lower bound, and a check from the sensitivity at FPR 0.135% (flagged if more than one grid step from the main limit; 0 flags). ✓: at or below the 4% commercial minimum. W has the lowest limit in 11 of 12 depth × noise rows (exception: realistic 10M: C2 2.80% vs W 2.89%). Tree limits use each tree's real threshold, so in 8 of 24 tree groups the limit is interpolated from a grid point where the tree flags nobody (sensitivity 0); this raises the limit by up to 0.34 FF points compared with interpolating from the sensitivity at FPR 0.135%.
+Table 1. Detection limits (FF at which sensitivity reaches 95% for the last time, decision #13) per depth and noise level, on a 14-point FF grid (1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 15%; every point simulated, limits interpolated linearly between neighbouring points): main estimate from the sensitivity at each method's own threshold, conservative estimate from its Wilson 95% lower bound, and a check from the sensitivity at FPR 0.135% (flagged if more than one step of the original 8-point grid from the main limit; 0 flags). ✓: at or below the 4% commercial minimum. W has the lowest limit in 12 of 12 depth × noise rows (no exceptions). Tree limits use each tree's real threshold, so in 10 of 24 tree groups the limit is interpolated from a grid point where the tree flags nobody (sensitivity 0); this raises the limit by up to 1.48 FF points compared with interpolating from the sensitivity at FPR 0.135%.
 
 ## Table 2
 
@@ -92,4 +92,4 @@ Table S3. W (weights from the true FF) vs W with the weights fixed at FF 10% (W_
 
 Output: `results/tables/tableS_w_vs_wfixed_limits.csv` · script: `src/evaluate/tables.py`
 
-Table S4. Detection limits of W with weights from the true FF and with weights fixed at FF 10% (W_fixedFF columns) per depth and noise level (main and conservative); they differ by at most 0.08 FF points.
+Table S4. Detection limits of W with weights from the true FF and with weights fixed at FF 10% (W_fixedFF columns) per depth and noise level (main and conservative, 14-point FF grid as in Table 1); they differ by at most 0.12 FF points.

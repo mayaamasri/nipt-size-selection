@@ -17,8 +17,13 @@ curve recovers at the next FF (sampling noise rather than interpolation). Listed
 
 The scenarios (Tasks 07, 08), the per-condition results and Figs. 3-5 stay on the 8-FF grid (detection_limits.csv).
 
-Writes results/tables/detection_limits_refined.csv (detection_limits.csv's columns plus at_fpr_pos_diff_14) and
-limits_dip_flags.csv. The self-tests run first: detection_limits' own self-test, and on the original 8 FFs this
+Tree diagnostic: lower_nobody_sens and lower_nobody_sens_lo say, for C1 and C2, whether the last grid FF below 95%
+(the lower end of the crossing interval) is a condition where the tree flags nobody (nobody_positive: no leaf met
+the target FPR on the calibration normals, so sensitivity there is 0); empty for the z-score methods and where the
+limit is outside the grid. Such limits sit close to the upper end of their interval whatever the sensitivities.
+
+Writes results/tables/detection_limits_refined.csv (detection_limits.csv's columns plus at_fpr_pos_diff_14 and the
+two tree columns) and limits_dip_flags.csv. The self-tests run first: detection_limits' own self-test, and on the original 8 FFs this
 code reproduces detection_limits.csv exactly. Run from the repo root (seconds):
     python -m src.evaluate.detection_limits_refined
 """
@@ -83,6 +88,26 @@ def refined_limits(config, results):
     return table
 
 
+TREES = ("C1", "C2")
+
+
+def lower_nobody(config, results, refined):
+    """Per row: on the sens and sens_lo bases, is the last FF below target a nobody_positive condition (trees)?"""
+    target = config["evaluation"]["sensitivity_target"]
+    by = {key: g.sort_values("ff") for key, g in results.groupby(GROUP)}
+    out = {"lower_nobody_sens": [], "lower_nobody_sens_lo": []}
+    for r in refined.itertuples():
+        g = by[(r.method, r.depth, r.noise)]
+        for basis, col in (("sens", "lower_nobody_sens"), ("sens_lo", "lower_nobody_sens_lo")):
+            s = g[basis].to_numpy(float)
+            below = np.flatnonzero(s < target)
+            if r.method not in TREES or not len(below) or below[-1] == len(s) - 1:
+                out[col].append(pd.NA)
+            else:
+                out[col].append(bool(g["nobody_positive"].astype(str).str.lower().iloc[below[-1]] == "true"))
+    return {k: pd.array(v, dtype="boolean") for k, v in out.items()}
+
+
 def dip_flags(config, results, refined, original):
     target = config["evaluation"]["sensitivity_target"]
     grid8 = sorted(float(v) for v in config["grid"]["fetal_fraction"])
@@ -130,6 +155,8 @@ def main():
 
     results = merged_results(config)
     refined = refined_limits(config, results)
+    for col, values in lower_nobody(config, results, refined).items():
+        refined[col] = values
     dips = dip_flags(config, results, refined, original)
     refined.to_csv(tables / "detection_limits_refined.csv", index=False, float_format="%.10g")
     dips.to_csv(tables / "limits_dip_flags.csv", index=False, float_format="%.6g")

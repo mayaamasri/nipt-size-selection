@@ -57,7 +57,8 @@ direction. Run from the repo root:
         follow-up, decision #19): extra FFs from results/refined_grid, limits checked against
         detection_limits_refined.csv; the 8 grid FFs keep their resamples (streams 0/1), the extra FFs use streams
         2/3, and the same resamples on the 8 grid FFs must reproduce the 8-FF CIs exactly (self-test). Writes
-        detection_limits_ci_refined.csv and limit_differences_ci_refined.csv.
+        detection_limits_ci_refined.csv (plus lower_nobody_positive: for tree limits on the sens basis, whether the
+        lower end of the crossing interval is a nobody_positive condition) and limit_differences_ci_refined.csv.
 """
 
 import argparse
@@ -353,6 +354,9 @@ def tables_for(res, config):
         results = pd.concat([results, pd.read_csv(repo_path(REFINED_DIR) / "results_all.csv", dtype=str,
                                                   keep_default_na=False)], ignore_index=True)
     fpr = pooled_fpr(results, res["depth"], res["noise"])
+    nobody = (pd.read_csv(repo_path(cfg["paths"]["results"]) / "tables" / "detection_limits_refined.csv",
+                          dtype={"noise": str}).set_index(["method", "depth", "noise"])["lower_nobody_sens"]
+              if res["refined"] else None)
     rows, drows = [], []
     key = {"grid": res["grid"], "depth": res["depth"], "noise": res["noise"]}
     for v, by_m in res["limits"].items():
@@ -362,7 +366,9 @@ def tables_for(res, config):
                 share, lo, hi = ci(vals, u["ci_level"], u["min_share_numeric"])
                 rows.append({"grid": res["grid"], "method": m, "depth": res["depth"], "noise": res["noise"],
                              "version": v, "basis": basis, "limit": p["ff_limit"], "limit_text": p["ff_limit_text"],
-                             "ci_lo": lo, "ci_hi": hi, "share_numeric": share, "pooled_test_fpr": fpr[m]})
+                             "ci_lo": lo, "ci_hi": hi, "share_numeric": share, "pooled_test_fpr": fpr[m],
+                             **({"lower_nobody_positive": nobody.loc[(m, res["depth"], res["noise"])]
+                                 if basis == "sens" else pd.NA} if res["refined"] else {})})
     for a, b in PAIRS[MAIN if res["grid"] == MAIN else "scenario"]:
         for v in pair_versions(res["grid"], (a, b)):
             for basis in BASES:
@@ -501,7 +507,8 @@ def main():
         r, d = tables_for(res, config)
         rows += r
         drows += d
-    limits, diffs = pd.DataFrame(rows, columns=LIMIT_COLS), pd.DataFrame(drows, columns=DIFF_COLS)
+    limit_cols = LIMIT_COLS + (["lower_nobody_positive"] if args.refined else [])
+    limits, diffs = pd.DataFrame(rows, columns=limit_cols), pd.DataFrame(drows, columns=DIFF_COLS)
     elapsed = time.time() - start
 
     if args.setting:
