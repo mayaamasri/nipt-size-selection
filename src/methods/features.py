@@ -7,7 +7,8 @@
               using the condition's FF and the post-mappability length distributions, z-scored against
               the reference normals
 
-C1 uses zA only; C2 uses all three. The raw statistics and their reference are in src.methods.reference.
+C1 uses zA only; C2 uses all three. In a robustness scenario (Task 07) C2's z_weighted uses the G1 weights
+(statistic weighted_g1), so C2 is not given the true profile either; see feature_statistic. The raw statistics and their reference are in src.methods.reference.
 
 Run from the repo root to print the features on the training set of the milestone condition
 (FF 4%, depth 5M, no noise):
@@ -16,7 +17,7 @@ Run from the repo root to print the features on the training set of the mileston
 
 import numpy as np
 
-from src.config import load_config
+from src.config import load_config, scenario_name
 from src.methods.reference import build_reference, statistics, zscores
 from src.simulate.patients import generate_group, origin_matrices
 
@@ -25,9 +26,16 @@ FEATURES = {"zA": "frac_all", "z_short": "short_excess", "z_weighted": "weighted
 TREE_FEATURES = {"C1": ["zA"], "C2": ["zA", "z_short", "z_weighted"]}
 
 
-def feature_matrix(z, method):
+def feature_statistic(feature, config):
+    """Statistic behind a feature: FEATURES, except z_weighted -> weighted_g1 in a robustness scenario."""
+    if feature == "z_weighted" and scenario_name(config) is not None:
+        return "weighted_g1"
+    return FEATURES[feature]
+
+
+def feature_matrix(z, method, config):
     """Features of one tree method as an (n, k) array, columns in TREE_FEATURES[method] order."""
-    return np.column_stack([z[FEATURES[f]] for f in TREE_FEATURES[method]])
+    return np.column_stack([z[feature_statistic(f, config)] for f in TREE_FEATURES[method]])
 
 
 def main():
@@ -36,7 +44,7 @@ def main():
     matrices = origin_matrices(config)
     reference = build_reference(generate_group(config, ff, depth, noise, "reference", matrices), ff, config, matrices)
     X = {g: feature_matrix(zscores(statistics(generate_group(config, ff, depth, noise, g, matrices),
-                                              ff, config, matrices), reference), "C2")
+                                              ff, config, matrices), reference), "C2", config)
          for g in ("train_normal", "train_t21")}
 
     names = TREE_FEATURES["C2"]

@@ -16,14 +16,16 @@ A group missing any grid FF is skipped and reported, never computed from an inco
 Reads results/tables/results_all.csv and writes results/tables/detection_limits.csv. The hand-checked
 self-test runs first, every time:
     python -m src.evaluate.detection_limits
+    python -m src.evaluate.detection_limits --scenario shift_p10   (Task 07: results/robustness/shift_p10)
 """
 
+import argparse
 import math
 
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.run_condition import method_order
 
 GROUP = ["method", "depth", "noise"]
@@ -172,7 +174,8 @@ def self_test(config):
 
 
 def main():
-    config = load_config()
+    parser = add_scenario_argument(argparse.ArgumentParser(description=__doc__.splitlines()[0]))
+    config = load_config(scenario=parser.parse_args().scenario)
     self_test(config)
 
     tables = repo_path(config["paths"]["results"]) / "tables"

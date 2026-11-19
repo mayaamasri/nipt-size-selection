@@ -11,6 +11,8 @@
          reference and used unchanged on the test set, like B.
   W      z_weighted > z_threshold, no tree (decision #15b).
   W_fixedFF  same as W with the weights at FF = weight_fixed_ff in every condition (decision #15c).
+  W_G1   robustness scenarios only (Task 07): W with the weights from the G1 profile (statistic weighted_g1),
+         i.e. a lab using a published profile; absent in the main analysis, where it would equal W.
 
 All z-scores are against the condition's reference normals (src.methods.reference).
 
@@ -60,7 +62,8 @@ def fixed_cutoff_methods(config):
 
 
 def zscore_methods(test_z, train_normal_z, train_t21_z, config):
-    """Scores, calls and cutoff for every z-score method on the test patients: A, B, B_c, B-opt, W, W_fixedFF.
+    """Scores, calls and cutoff for every z-score method on the test patients: A, B, B_c, B-opt, W, W_fixedFF
+    (and W_G1 after W when the statistics include weighted_g1, i.e. in a robustness scenario).
 
     Returns (methods, sep): methods is dict method -> {"scores": array, "calls": bool array,
     "cutoff": upper bp of the size window, or None if the method keeps all lengths}; sep is the B-opt
@@ -74,6 +77,7 @@ def zscore_methods(test_z, train_normal_z, train_t21_z, config):
               **{m: (test_z[window_name(config, c)], c) for m, c in fixed_cutoff_methods(config).items()},
               "B-opt": (test_z[window_name(config, u)], u),
               "W": (test_z["weighted"], None),
+              **({"W_G1": (test_z["weighted_g1"], None)} if "weighted_g1" in test_z else {}),
               "W_fixedFF": (test_z["weighted_fixedff"], None)}
     return {m: {"scores": s, "calls": s > t, "cutoff": c} for m, (s, c) in scores.items()}, sep
 

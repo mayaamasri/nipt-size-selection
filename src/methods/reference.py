@@ -5,11 +5,16 @@ Raw statistics per patient (X has shape (n, 2, 465): row 0 chr21, row 1 other au
   frac_<lo>_<hi>      chr21 fraction, fragments lo..hi bp only     (method B: 40-156; B-opt: 40-u; B_c: 40-c)
   short_excess        Yu: share of <= short_fragment_bp on chr21 minus share on other autosomes  (z_short)
   weighted            chr21 fraction with each length weighted by w(l) = P(fetal | l)  (z_weighted, method W)
-  weighted_fixedff    same as weighted, with w(l) at FF = weight_fixed_ff in every condition  (W_fixedFF)
+  weighted_fixedff    same as weighted, with w(l) at FF = weight_fixed_ff in every condition, from the G1
+                      profile                                                              (W_fixedFF)
+  weighted_g1         robustness scenarios only (Task 07): weighted with w(l) from the G1 profile at the
+                      true FF                                                     (W_G1, C2's z_weighted)
 
 w(l) = FF * p_f(l) / (FF * p_f(l) + (1 - FF) * p_m(l)), with p_f, p_m the length distributions after
 mappability (normal fetal and maternal matrices from origin_matrices, summed over the two rows). weighted uses
-the condition's true FF.
+the condition's true FF and the patients' own profile. The G1 matrices (matrices_g1, from g1_matrices) are the
+main analysis's; there they are the same object as matrices, so weighted_fixedff is unchanged and weighted_g1
+is not computed.
 
 The reference for a condition is the mean and SD (ddof=1) of each statistic over its reference normals.
 
@@ -19,7 +24,7 @@ Run from the repo root to print the reference for the milestone condition (FF 4%
 
 import numpy as np
 
-from src.config import load_config
+from src.config import base_config, load_config, scenario_name
 from src.simulate.patients import CHR21, OTHER, generate_group, origin_matrices
 
 
@@ -44,8 +49,19 @@ def posterior_weights(ff, matrices):
     return ff * p_f / (ff * p_f + (1 - ff) * p_m)
 
 
-def statistics(X, ff, config, matrices):
-    """Raw per-patient statistics: dict name -> array of length n."""
+def g1_matrices(config, matrices):
+    """Matrices of the G1 profile: matrices itself in the main analysis, else built from base_config(config)."""
+    return matrices if scenario_name(config) is None else origin_matrices(base_config(config))
+
+
+def statistics(X, ff, config, matrices, matrices_g1=None):
+    """Raw per-patient statistics: dict name -> array of length n. In a scenario, matrices_g1 (from
+    g1_matrices) is required, so G1 weights never fall back to the scenario profile."""
+    scenario = scenario_name(config) is not None
+    if matrices_g1 is None:
+        if scenario:
+            raise ValueError(f"scenario {scenario_name(config)!r}: pass matrices_g1 (the G1 weights' matrices)")
+        matrices_g1 = matrices
     lengths = matrices["lengths"]
     chr21, other = X[:, CHR21].astype(float), X[:, OTHER].astype(float)
     out = {"frac_all": chr21.sum(axis=1) / (chr21 + other).sum(axis=1)}
@@ -61,8 +77,11 @@ def statistics(X, ff, config, matrices):
 
     w = posterior_weights(ff, matrices)
     out["weighted"] = (chr21 @ w) / ((chr21 + other) @ w)
-    w = posterior_weights(config["methods"]["weight_fixed_ff"], matrices)
+    w = posterior_weights(config["methods"]["weight_fixed_ff"], matrices_g1)
     out["weighted_fixedff"] = (chr21 @ w) / ((chr21 + other) @ w)
+    if scenario:
+        w = posterior_weights(ff, matrices_g1)
+        out["weighted_g1"] = (chr21 @ w) / ((chr21 + other) @ w)
 
     for name, v in out.items():
         bad = ~np.isfinite(v)
@@ -72,9 +91,9 @@ def statistics(X, ff, config, matrices):
     return out
 
 
-def build_reference(reference_patients, ff, config, matrices):
+def build_reference(reference_patients, ff, config, matrices, matrices_g1=None):
     """Mean and SD (ddof=1) of every statistic over the reference normals: dict name -> (mean, sd)."""
-    stats = statistics(reference_patients, ff, config, matrices)
+    stats = statistics(reference_patients, ff, config, matrices, matrices_g1)
     reference = {name: (float(v.mean()), float(v.std(ddof=1))) for name, v in stats.items()}
     for name, (_, sd) in reference.items():
         if not (np.isfinite(sd) and sd > 0):

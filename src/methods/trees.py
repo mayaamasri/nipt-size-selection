@@ -94,7 +94,7 @@ def fit_tree_method(method, train_normal_z, train_t21_z, calib_z, test_z, config
     nobody_positive (no leaf meets the target, so nobody is called positive), max_depth,
     cv_auc {depth: mean AUC}, importances {feature: importance}.
     """
-    X = np.vstack([feature_matrix(train_normal_z, method), feature_matrix(train_t21_z, method)])
+    X = np.vstack([feature_matrix(train_normal_z, method, config), feature_matrix(train_t21_z, method, config)])
     y = np.concatenate([np.zeros(len(train_normal_z["frac_all"]), int), np.ones(len(train_t21_z["frac_all"]), int)])
 
     cv_auc = cross_validate(X, y, config)
@@ -104,13 +104,13 @@ def fit_tree_method(method, train_normal_z, train_t21_z, calib_z, test_z, config
 
     target = config["methods"]["target_fpr"]
     candidates = leaf_candidates(tree, X)
-    calib_scores = tree.predict_proba(feature_matrix(calib_z, method))[:, 1]
+    calib_scores = tree.predict_proba(feature_matrix(calib_z, method, config))[:, 1]
     threshold, calib_fpr = threshold_at_fpr(calib_scores, candidates, target)
     check_threshold(calib_scores, candidates, threshold, calib_fpr, target)
     # True when no leaf meets the target on calibration, so t is the extra candidate above every leaf
     nobody_positive = bool(threshold > candidates[:-1].max())
 
-    scores = tree.predict_proba(feature_matrix(test_z, method))[:, 1]
+    scores = tree.predict_proba(feature_matrix(test_z, method, config))[:, 1]
     return {"scores": scores, "calls": scores >= threshold, "threshold": threshold, "calib_fpr": calib_fpr,
             "nobody_positive": nobody_positive, "max_depth": depth, "cv_auc": cv_auc,
             "importances": dict(zip(TREE_FEATURES[method], tree.feature_importances_.tolist()))}

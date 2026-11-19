@@ -5,7 +5,8 @@ rows (chr21 and other autosomes), F_u = sum_l u(l) X21(l) / sum_l u(l) [X21(l) +
   A          u = 1
   B, B_c     u = 1 inside [40, c], 0 outside
   W          u = w*(l) = FF p_f(l) / p_mix(l), the true P(fetal | l)
-  W_fixedFF  u = the same with FF = weight_fixed_ff (0.10) in the weight
+  W_fixedFF  u = the same with FF = weight_fixed_ff (0.10) in the weight, from the G1 profile
+  W_G1       robustness scenarios only (Task 07): u = w(l) from the G1 profile at the true FF
 
 With p_f, p_m the post-mappability length distributions (normal fetal and maternal matrices from origin_matrices,
 summed over the two rows), p_mix = FF p_f + (1 - FF) p_m and E[x] = sum_l p_mix(l) x(l), to first order in FF
@@ -17,7 +18,7 @@ g_eff = g and r_eff = r.
 
 Analytic optimum (6C, NOT a detection method): with depth-independent noise sigma the weights that maximise
 sep_u are u_opt = w* - c, c = FF k / (1 + k), k = sigma^2 p0 N (Sherman-Morrison); u_opt = w* when sigma = 0.
-On the W rows: ratio_pred_opt = ratio_pred(u_opt) and w_efficiency = ratio_pred / ratio_pred_opt.
+On the W rows (and W_G1 rows in a scenario): ratio_pred_opt = ratio_pred(u_opt) and w_efficiency = ratio_pred / ratio_pred_opt.
 
 For every condition and methods B, B_120 ... B_165, W, W_fixedFF (B-opt is left out: its cutoff is chosen from
 the data; C1 and C2 are not weighted fractions), from results/tables/results_all.csv:
@@ -25,24 +26,33 @@ the data; C1 and C2 are not weighted fractions), from results/tables/results_all
   rel_error  (ratio_obs - ratio_pred) / ratio_pred;  abs_error = ratio_obs - ratio_pred
   low_signal sep_A < 1 (same rule as breakeven_check.py)
 
+Robustness scenarios (Task 07, --scenario NAME): p_f, p_m, p_mix and w* are the scenario's (the patients'
+true profile), while W_G1 and W_fixedFF keep the G1 weights as u; W_G1 rows and a W_G1 family are added, and
+everything is read from and written to results/robustness/NAME/tables. In the main analysis the G1 and patient
+profiles are the same, W_G1 is absent and the outputs are unchanged.
+
 No simulation: only results_all.csv and origin_matrices. Writes results/tables/unified_model_check.csv and
 unified_model_summary.csv (breakeven_check's summary per method family: B = B and every B_c, W, W_fixedFF).
 breakeven_check.csv is only read (self-test 2). The self-test runs first, every time. Run from the repo root
 (seconds):
     python -m src.evaluate.unified_model_check
+    python -m src.evaluate.unified_model_check --scenario shift_p10   (Task 07: results/robustness/shift_p10)
 """
+
+import argparse
 
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.breakeven_check import CONDITION, fixed_cutoff_methods, predicted_ratio, summarise
-from src.methods.reference import posterior_weights
+from src.methods.reference import g1_matrices, posterior_weights
 from src.simulate.patients import origin_matrices
 
 COLUMNS = CONDITION + ["sigma", "method", "p0", "g_eff", "r_eff", "sep_A", "sep_obs", "ratio_obs", "ratio_pred",
                        "rel_error", "abs_error", "low_signal", "ratio_pred_opt", "w_efficiency"]
-FAMILIES = {"B": None, "W": ["W"], "W_fixedFF": ["W_fixedFF"]}   # None: B and every B_c
+FAMILIES = {"B": None, "W": ["W"], "W_G1": ["W_G1"], "W_fixedFF": ["W_fixedFF"]}   # None: B and every B_c
+WEIGHTED = ("W", "W_G1", "W_fixedFF")
 
 
 def length_distributions(matrices):
@@ -82,8 +92,10 @@ def optimal_weights(w, ff, p0, depth, sigma):
     return w - ff * k / (1 + k)
 
 
-def method_weights(config, matrices, ff):
-    """method -> u(l) for B, every B_c, W (true FF) and W_fixedFF, in output order."""
+def method_weights(config, matrices, ff, matrices_g1=None):
+    """method -> u(l) for B, every B_c, W (true FF, patients' profile), W_G1 (scenario only) and W_fixedFF (G1
+    profile), in output order. matrices_g1 defaults to matrices (the main analysis)."""
+    matrices_g1 = matrices if matrices_g1 is None else matrices_g1
     lengths = matrices["lengths"]
     lo = config["methods"]["size_selection_window_bp"][0]
     out = {}
@@ -91,19 +103,21 @@ def method_weights(config, matrices, ff):
         hi = config["methods"]["size_selection_window_bp"][1] if method == "B" else int(method.split("_")[1])
         out[method] = ((lengths >= lo) & (lengths <= hi)).astype(float)
     out["W"] = posterior_weights(ff, matrices)
-    out["W_fixedFF"] = posterior_weights(config["methods"]["weight_fixed_ff"], matrices)
+    if matrices_g1 is not matrices:
+        out["W_G1"] = posterior_weights(ff, matrices_g1)
+    out["W_fixedFF"] = posterior_weights(config["methods"]["weight_fixed_ff"], matrices_g1)
     return out
 
 
-def unified_table(results, config, matrices):
+def unified_table(results, config, matrices, matrices_g1=None):
     p_f, p_m = length_distributions(matrices)
     sep = results.assign(sep=(results["z_mean_t21"] - results["z_mean_normal"]) / results["z_sd_normal"])
     sep_a = sep[sep["method"] == "A"].set_index(CONDITION)["sep"]
-    methods = list(method_weights(config, matrices, 0.1))
+    methods = list(method_weights(config, matrices, 0.1, matrices_g1))
     rows = []
     for (ff, depth, noise), cond in sep[sep["method"].isin(methods)].groupby(CONDITION, sort=False):
         sigma, p0 = float(cond["sigma"].iloc[0]), float(cond["p0"].iloc[0])
-        weights = method_weights(config, matrices, ff)
+        weights = method_weights(config, matrices, ff, matrices_g1)
         s_a = sep_a.loc[(ff, depth, noise)]
         for r in cond.itertuples():
             terms = model_terms(weights[r.method], p_f, p_m, ff, p0, depth, sigma)
@@ -111,7 +125,7 @@ def unified_table(results, config, matrices):
                    "g_eff": terms["g_eff"], "r_eff": terms["r_eff"], "sep_A": s_a, "sep_obs": r.sep,
                    "ratio_obs": r.sep / s_a, "ratio_pred": terms["ratio_pred"],
                    "ratio_pred_opt": np.nan, "w_efficiency": np.nan}
-            if r.method == "W":
+            if r.method in ("W", "W_G1"):   # W_G1: scenarios only; u_opt is always the patients' profile's
                 u_opt = optimal_weights(weights["W"], ff, p0, depth, sigma)
                 row["ratio_pred_opt"] = model_terms(u_opt, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
                 row["w_efficiency"] = row["ratio_pred"] / row["ratio_pred_opt"]
@@ -132,13 +146,15 @@ def family_summary(table):
     """breakeven_check.summarise per method family, with a family column in front."""
     parts = []
     for family, methods in FAMILIES.items():
-        d = table[~table["method"].isin(["W", "W_fixedFF"])] if methods is None else table[table["method"].isin(methods)]
+        d = table[~table["method"].isin(WEIGHTED)] if methods is None else table[table["method"].isin(methods)]
+        if d.empty:   # W_G1 outside a scenario
+            continue
         parts.append(summarise(d).assign(family=family))
     out = pd.concat(parts, ignore_index=True)
     return out[["family"] + [c for c in out.columns if c != "family"]]
 
 
-def self_test(config, matrices, results, breakeven):
+def self_test(config, matrices, results, breakeven, matrices_g1=None):
     """Identities of the model on the real length distributions, in every grid condition."""
     p_f, p_m = length_distributions(matrices)
     conditions = results[results["method"] == "A"][CONDITION + ["sigma", "p0"]].itertuples(index=False)
@@ -161,8 +177,8 @@ def self_test(config, matrices, results, breakeven):
     worst = 0.0
     keyed = breakeven.set_index(CONDITION + ["method"])
     for ff, depth, noise, sigma, p0 in conditions:
-        for method, u in method_weights(config, matrices, ff).items():
-            if method in ("W", "W_fixedFF"):
+        for method, u in method_weights(config, matrices, ff, matrices_g1).items():
+            if method in WEIGHTED:
                 continue
             ref = keyed.loc[(ff, depth, noise, method)]
             t = model_terms(u, p_f, p_m, ff, p0, depth, sigma)
@@ -173,7 +189,7 @@ def self_test(config, matrices, results, breakeven):
     # 3. scaling the weights by 7 does not change ratio_pred
     worst = 0.0
     for ff, depth, _, sigma, p0 in conditions:
-        for u in method_weights(config, matrices, ff).values():
+        for u in method_weights(config, matrices, ff, matrices_g1).values():
             a = model_terms(u, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
             b = model_terms(7 * u, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
             worst = max(worst, abs(b / a - 1))
@@ -227,14 +243,16 @@ def self_test(config, matrices, results, breakeven):
 
 
 def main():
-    config = load_config()
+    parser = add_scenario_argument(argparse.ArgumentParser(description=__doc__.splitlines()[0]))
+    config = load_config(scenario=parser.parse_args().scenario)
     tables = repo_path(config["paths"]["results"]) / "tables"
     results = pd.read_csv(tables / "results_all.csv", dtype={"noise": str})
     breakeven = pd.read_csv(tables / "breakeven_check.csv", dtype={"noise": str})
     matrices = origin_matrices(config)
-    self_test(config, matrices, results, breakeven)
+    matrices_g1 = g1_matrices(config, matrices)
+    self_test(config, matrices, results, breakeven, matrices_g1)
 
-    table = unified_table(results, config, matrices)
+    table = unified_table(results, config, matrices, matrices_g1)
     summary = family_summary(table)
     table.to_csv(tables / "unified_model_check.csv", index=False, float_format="%.10g")
     summary.to_csv(tables / "unified_model_summary.csv", index=False, float_format="%.4g")

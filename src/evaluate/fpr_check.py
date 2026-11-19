@@ -19,13 +19,16 @@ estimation error is ignored (it adds ~0.002 percentage points on average).
 
 Reads results/tables/results_all.csv, writes results/tables/fpr_check.csv. Run from the repo root:
     python -m src.evaluate.fpr_check
+    python -m src.evaluate.fpr_check --scenario shift_p10   (Task 07: results/robustness/shift_p10)
 """
+
+import argparse
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.run_condition import method_order
 from src.simulate.mappability import wilson_interval
 
@@ -78,7 +81,8 @@ def fpr_check(results, config):
 
 
 def main():
-    config = load_config()
+    parser = add_scenario_argument(argparse.ArgumentParser(description=__doc__.splitlines()[0]))
+    config = load_config(scenario=parser.parse_args().scenario)
     tables = repo_path(config["paths"]["results"]) / "tables"
     results = pd.read_csv(tables / "results_all.csv", dtype={"noise": str})
     table = fpr_check(results, config)

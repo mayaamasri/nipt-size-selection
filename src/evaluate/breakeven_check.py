@@ -19,12 +19,15 @@ Writes results/tables/breakeven_check.csv and breakeven_summary.csv: median, 95t
 overall and per noise level (all rows and without low_signal), per FF and per depth (without low_signal). Run from the
 repo root:
     python -m src.evaluate.breakeven_check
+    python -m src.evaluate.breakeven_check --scenario shift_p10   (Task 07: results/robustness/shift_p10)
 """
+
+import argparse
 
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 
 CONDITION = ["ff", "depth", "noise"]
 
@@ -94,7 +97,8 @@ def summarise(table):
 
 
 def main():
-    config = load_config()
+    parser = add_scenario_argument(argparse.ArgumentParser(description=__doc__.splitlines()[0]))
+    config = load_config(scenario=parser.parse_args().scenario)
     tables = repo_path(config["paths"]["results"]) / "tables"
     table = breakeven_table(pd.read_csv(tables / "results_all.csv"), config)
     summary = summarise(table)

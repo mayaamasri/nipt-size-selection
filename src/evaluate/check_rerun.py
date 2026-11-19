@@ -8,6 +8,7 @@ Exits with status 1 if any row differs.
 Run from the repo root (default: FF 4%, 5M, realistic noise):
     python -m src.evaluate.check_rerun
     python -m src.evaluate.check_rerun --ff 0.02 --depth 10000000 --noise low
+    python -m src.evaluate.check_rerun --scenario shift_p10   (against results/robustness/shift_p10/tables)
 """
 
 import argparse
@@ -18,7 +19,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.run_condition import CONDITION, parse_noise, run_condition, sort_table
 
 
@@ -41,13 +42,15 @@ def main():
     parser.add_argument("--ff", type=float, default=0.04)
     parser.add_argument("--depth", type=int, default=5_000_000)
     parser.add_argument("--noise", type=parse_noise, default="realistic")
+    add_scenario_argument(parser)
     args = parser.parse_args()
 
-    config = load_config()
+    config = load_config(scenario=args.scenario)
     out_dir = repo_path(config["paths"]["results"]) / "tables"
     start = time.time()
     tables, _ = run_condition(config, args.ff, args.depth, args.noise)
-    print(f"Reran FF {args.ff}, depth {args.depth:,}, noise {args.noise} in {time.time() - start:.1f} s")
+    where = f" (scenario {args.scenario})" if args.scenario else ""
+    print(f"Reran FF {args.ff}, depth {args.depth:,}, noise {args.noise}{where} in {time.time() - start:.1f} s")
 
     ok = True
     for name, table in tables.items():

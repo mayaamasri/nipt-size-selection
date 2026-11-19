@@ -16,8 +16,16 @@ Running a condition again replaces its earlier rows in every table (never duplic
 sorted by ff, depth, noise (in config grid order), then their own columns. run_log.csv is written last.
 Prints the milestone sanity checks (brief 3F) at the end.
 
+--scenario NAME (Task 07, decision #17) runs the condition with the fetal-profile scenario NAME
+(src.config.load_config): every group, including the reference, is generated from the scenario profile, the
+method W_G1 (weights from the G1 profile) is added after W, W_fixedFF and C2's z_weighted use the G1 weights,
+and the tables go to results/robustness/NAME/tables. The patient seeds are the same spawn keys as the main
+grid (no scenario index), so a scenario's patients share their random streams with the main grid's; since the
+multinomial probabilities differ, this pairs the scenarios only partially, not patient by patient.
+
 Run from the repo root, e.g. the milestone condition:
     python -m src.evaluate.run_condition --ff 0.04 --depth 5000000 --noise none
+    python -m src.evaluate.run_condition --ff 0.04 --depth 5000000 --noise none --scenario shift_p10
 """
 
 import argparse
@@ -28,10 +36,10 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
-from src.config import REPO_ROOT, load_config, repo_path
+from src.config import REPO_ROOT, add_scenario_argument, load_config, repo_path, scenario_name
 from src.evaluate.metrics import evaluate, g_and_r
 from src.methods.features import TREE_FEATURES
-from src.methods.reference import build_reference, statistics, zscores
+from src.methods.reference import build_reference, g1_matrices, statistics, zscores
 from src.methods.trees import fit_tree_method
 from src.methods.zscore import fixed_cutoff_methods, zscore_methods
 from src.simulate.patients import CHR21, GROUPS, generate_group, noise_sigma, origin_matrices
@@ -51,8 +59,9 @@ SORT = {
 
 
 def method_order(config):
-    """Every method, in the order of the results tables."""
-    return ["A", "B", *fixed_cutoff_methods(config), "B-opt", "W", "W_fixedFF", *TREE_FEATURES]
+    """Every method, in the order of the results tables (W_G1 only in a robustness scenario)."""
+    w_g1 = [] if scenario_name(config) is None else ["W_G1"]
+    return ["A", "B", *fixed_cutoff_methods(config), "B-opt", "W", *w_g1, "W_fixedFF", *TREE_FEATURES]
 
 
 def parse_noise(text):
@@ -76,11 +85,14 @@ def git_state():
 def run_condition(config, ff, depth, noise):
     """All tables of one condition as DataFrames, plus the test normals' zA for the sanity checks."""
     matrices = origin_matrices(config)
+    matrices_g1 = g1_matrices(config, matrices)   # the same object in the main analysis
     target = config["methods"]["target_fpr"]
 
     # Each group is generated once; raw counts are dropped after their statistics are computed
-    reference = build_reference(generate_group(config, ff, depth, noise, "reference", matrices), ff, config, matrices)
-    z = {g: zscores(statistics(generate_group(config, ff, depth, noise, g, matrices), ff, config, matrices), reference)
+    reference = build_reference(generate_group(config, ff, depth, noise, "reference", matrices), ff, config, matrices,
+                                matrices_g1)
+    z = {g: zscores(statistics(generate_group(config, ff, depth, noise, g, matrices), ff, config, matrices,
+                               matrices_g1), reference)
          for g in GROUPS if g != "reference"}
     test_z = {k: np.concatenate([z["test_normal"][k], z["test_t21"][k]]) for k in z["test_normal"]}
     y = np.r_[np.zeros(len(z["test_normal"]["frac_all"]), int), np.ones(len(z["test_t21"]["frac_all"]), int)]
@@ -186,9 +198,10 @@ def main():
     parser.add_argument("--ff", type=float, required=True, help="fetal fraction, e.g. 0.04")
     parser.add_argument("--depth", type=int, required=True, help="depth, e.g. 5000000")
     parser.add_argument("--noise", type=parse_noise, required=True, help="noise level as in the config, e.g. none")
+    add_scenario_argument(parser)
     args = parser.parse_args()
 
-    config = load_config()
+    config = load_config(scenario=args.scenario)
     commit, dirty = git_state()  # state of the code that runs, taken before anything is written
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
     tables, test_normal_za = run_condition(config, args.ff, args.depth, args.noise)

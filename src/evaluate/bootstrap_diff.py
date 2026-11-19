@@ -13,18 +13,23 @@ Columns: diff, se (bootstrap SD), ci_lo/ci_hi (2.5/97.5 percentiles), within_noi
 saturated), saturated (both methods >= 99.95%). Bootstrap seeds: spawn key (3, i_ff, i_depth, i_noise),
 apart from the patient (1, ...) and QC (2, ...) keys.
 
+With --scenario NAME (Task 07) the patients are regenerated from that fetal-profile scenario (same seeds as
+the main grid) and checked against results/robustness/NAME/tables/results_all.csv; output goes there too.
+
 Writes results/tables/fig3_b_minus_a.csv. ~7 min for the 96 conditions. Run from the repo root:
     python -m src.evaluate.bootstrap_diff
+    python -m src.evaluate.bootstrap_diff --scenario shift_p10   (Task 07: results/robustness/shift_p10)
 """
 
+import argparse
 import time
 
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.metrics import sens_at_fpr
-from src.methods.reference import build_reference, statistics, zscores
+from src.methods.reference import build_reference, g1_matrices, statistics, zscores
 from src.methods.zscore import window_name
 from src.simulate.patients import _grid_index, generate_group, origin_matrices
 
@@ -43,8 +48,11 @@ def bootstrap_seed(config, ff, depth, noise):
 
 def condition_scores(config, ff, depth, noise, matrices):
     """Test labels and the A and B scores of one condition, exactly as in run_condition."""
-    reference = build_reference(generate_group(config, ff, depth, noise, "reference", matrices), ff, config, matrices)
-    z = {g: zscores(statistics(generate_group(config, ff, depth, noise, g, matrices), ff, config, matrices), reference)
+    matrices_g1 = g1_matrices(config, matrices)   # needed by statistics() in a scenario; A and B don't use it
+    reference = build_reference(generate_group(config, ff, depth, noise, "reference", matrices), ff, config, matrices,
+                                matrices_g1)
+    z = {g: zscores(statistics(generate_group(config, ff, depth, noise, g, matrices), ff, config, matrices,
+                               matrices_g1), reference)
          for g in ("test_normal", "test_t21")}
     y = np.r_[np.zeros(len(z["test_normal"]["frac_all"]), int), np.ones(len(z["test_t21"]["frac_all"]), int)]
     scores = {m: np.concatenate([z["test_normal"][k], z["test_t21"][k]])
@@ -62,7 +70,8 @@ def bootstrap_diff(y, scores, target, rng, n_boot=N_BOOT):
 
 
 def main():
-    config = load_config()
+    parser = add_scenario_argument(argparse.ArgumentParser(description=__doc__.splitlines()[0]))
+    config = load_config(scenario=parser.parse_args().scenario)
     matrices = origin_matrices(config)
     target = config["methods"]["target_fpr"]
     tables = repo_path(config["paths"]["results"]) / "tables"

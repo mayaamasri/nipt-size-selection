@@ -21,8 +21,16 @@ def load_length_distributions(config):
       1. drop length 0 (no valid insert size)
       2. replace the artifact bin (101 bp) in both columns by the mean of its neighbours
       3. keep fragment_length_min..fragment_length_max, then normalise each column to sum to 1
+
+    Robustness scenario (Task 07, decision #17; only if config has a fetal_profile, see src.config): the FETAL
+    column is changed, the maternal one never.
+      after step 2, shift:  fetal_new(l) = fetal(l - shift_bp) on the full raw array (positive = fetal
+                            fragments longer); lengths with no source value get 0
+      after step 3, blend:  fetal = (1 - blend_maternal) fetal + blend_maternal maternal
+    Without a fetal_profile none of this runs, so the main analysis is unchanged.
     """
     sim = config["simulation"]
+    profile = config.get("fetal_profile")
     counts = pd.read_csv(repo_path(sim["length_counts_csv"]), comment="#")
     counts = counts.rename(columns={"maternal_count": "maternal", "fetal_count": "fetal"})
     counts[list(ORIGINS)] = counts[list(ORIGINS)].astype(float)
@@ -35,9 +43,21 @@ def load_length_distributions(config):
     bad = sim["length_artifact_bp"]
     counts.loc[bad] = (counts.loc[bad - 1] + counts.loc[bad + 1]) / 2
 
+    # scenario shift (fetal only), on the full array: value at l comes from l - shift_bp
+    if profile is not None and profile["shift_bp"] != 0:
+        source = counts["fetal"]
+        counts["fetal"] = source.reindex(counts.index - int(profile["shift_bp"])).fillna(0.0).to_numpy()
+
     # 3. length window, then normalise
     counts = counts.loc[sim["fragment_length_min"]:sim["fragment_length_max"]]
     probs = counts / counts.sum()
+
+    # scenario blend (fetal only), after normalising: both columns stay normalised
+    if profile is not None and profile["blend_maternal"] != 0:
+        lam = float(profile["blend_maternal"])
+        if not 0 <= lam <= 1:
+            raise ValueError(f"blend_maternal must be in [0, 1], got {lam!r}")
+        probs["fetal"] = (1 - lam) * probs["fetal"] + lam * probs["maternal"]
     return probs.reset_index()
 
 
