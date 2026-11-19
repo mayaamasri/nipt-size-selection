@@ -42,7 +42,7 @@ src/evaluate/figures/  one script per manuscript figure
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
 results/robustness/    per-scenario tables of the robustness analyses (Task 07 fetal profiles, Task 08 short-fragment noise)
-results/refined_grid/  extra FF conditions of the refined-grid check (Task 09)
+results/refined_grid/  extra FF conditions: the 14-point detection-limit grid (Task 09, decision #19)
 manuscript/            manuscript source
 ```
 
@@ -155,6 +155,15 @@ its CIs are lumpy (the limit jumps when the number of resampled normals in the t
 A tree pair is therefore never called clear from the `sens` basis alone. A difference gets a CI only if both
 limits are numeric in at least 95% of resamples. Seeds: family 5 (test and reference streams per setting).
 
+**14-point limit grid (decision #19).** The main grid's detection limits in the paper (Table 1 and its
+conservative and sens_at_fpr columns, Table S4) use a 14-point FF grid: the 8 grid FFs plus
+`evaluation.limit_extra_ff` (1.5, 2.5, 3.5, 5, 7, 9%), each simulated at every depth × noise setting
+(`python -m src.evaluate.refined_grid --all-settings`, 72 conditions in `results/refined_grid`, seeds family 7).
+`python -m src.evaluate.detection_limits_refined` writes `detection_limits_refined.csv` and `limits_dip_flags.csv`
+(limits that move because one new FF dips below 95% and the curve recovers), and
+`python -m src.evaluate.limit_ci --refined --jobs 6` the CIs on that grid. The scenarios, the per-condition
+results, Figs. 3–5 and `detection_limits.csv` stay on the 8 simulated grid FFs.
+
 `python -m src.evaluate.refined_grid` checks the linear interpolation between grid FFs: it simulates the midpoint
 FF of the interval holding two close limits (16 conditions, seeds family 7, listed in `uncertainty.refine_conditions`)
 and recomputes those limits on the refined grid.
@@ -172,6 +181,8 @@ and recomputes those limits on the refined grid.
 | `figures/figS_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
 | `figures/figS_short_noise` | `src/evaluate/figures/figS_short_noise.py` | B and W vs A with extra noise on short fragments (k = 1, 1.5, 2), FF 4%: model vs simulation |
 | `tables/detection_limits_ci.csv`, `limit_differences_ci.csv` | `src/evaluate/limit_ci.py` | bootstrap 95% CIs of the detection limits (with each method's pooled test FPR) and of method differences (`clear` = CI excludes 0), main grid and shift_p10 / blend50 |
+| `tables/detection_limits_refined.csv`, `limits_dip_flags.csv` | `src/evaluate/detection_limits_refined.py` | main-grid detection limits on the 14-point FF grid (used by Table 1 and Table S4), and limits moved by a dip at a new FF |
+| `tables/detection_limits_ci_refined.csv`, `limit_differences_ci_refined.csv` | `src/evaluate/limit_ci.py --refined` | bootstrap CIs of the 14-point limits and of the method differences |
 | `tables/limits_refined_grid.csv`, `limits_refined_pairs.csv` | `src/evaluate/refined_grid.py` | interpolated vs refined-grid limits where pairs differ by < 0.2 points, and the rankings that change |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
 | `tables/results_all.csv` and per-condition tables | `src/evaluate/run_condition.py` | all metrics per condition × method |

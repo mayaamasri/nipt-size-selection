@@ -55,6 +55,11 @@ methods:
 
 evaluation:
   sensitivity_target: 0.95              # decision #13: detection limit
+  # Task 09 follow-up (decision #19): the main grid's detection limits use the 14-point FF grid = grid.fetal_fraction
+  # plus these FFs, simulated at every depth x noise setting (results/refined_grid). Patient seeds of these FFs:
+  # (7, k, i_depth, i_noise, i_group), k = position in this list (append only). The same list (same order) was
+  # uncertainty.refine_ff in Task 09 9C, so its 16 conditions keep their seeds.
+  limit_extra_ff: [0.015, 0.025, 0.035, 0.05, 0.07, 0.09]
 
 robustness:
   fetal_profiles:              # decision #17; G1 itself (shift 0, blend 0) is the main analysis
@@ -73,8 +78,7 @@ uncertainty:                   # Task 09, decision #19: bootstrap CIs of the det
   min_share_numeric: 0.95      # a difference gets a CI only if both limits are numeric in >= this share
   scenarios: [shift_p10, blend50]
   refine_max_diff: 0.002       # 9C: refine a setting where a 9B pair's limits differ by < 0.2 points
-  # 9C extra FF values; patient seeds (7, k, i_depth, i_noise, i_group), k = position in this list (append only)
-  refine_ff: [0.015, 0.025, 0.035, 0.05, 0.07, 0.09]
+  # 9C extra FF values: evaluation.limit_extra_ff (patient seeds family 7)
   refine_conditions:           # [ff, depth, noise], derived from detection_limits.csv (checked by refined_grid.py)
     - [0.07, 1000000, none]
     - [0.07, 1000000, low]

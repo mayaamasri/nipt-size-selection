@@ -53,6 +53,11 @@ direction. Run from the repo root:
     python -m src.evaluate.limit_ci                                     everything (~10 min with --jobs 6)
     python -m src.evaluate.limit_ci --setting 10000000 realistic        one main-grid setting, printed only (gate)
     python -m src.evaluate.limit_ci --cache-only                        build and verify the caches
+    python -m src.evaluate.limit_ci --refined --jobs 6                  main grid on the 14-point FF grid (Task 09
+        follow-up, decision #19): extra FFs from results/refined_grid, limits checked against
+        detection_limits_refined.csv; the 8 grid FFs keep their resamples (streams 0/1), the extra FFs use streams
+        2/3, and the same resamples on the 8 grid FFs must reproduce the 8-FF CIs exactly (self-test). Writes
+        detection_limits_ci_refined.csv and limit_differences_ci_refined.csv.
 """
 
 import argparse
@@ -81,6 +86,7 @@ BASES = ("sens", "sens_at_fpr")
 CHECK_SAME = 20          # resamples per setting where sens_at_fpr is recomputed from the new reference and compared
 COMPARE = ("sens", "fpr", "auc", "sens_at_fpr")
 CACHE_DIR = "data/processed/limit_ci_cache"
+REFINED_DIR = "results/refined_grid/tables"      # extra-FF conditions of the 14-point main-grid limits
 
 
 # ---------------------------------------------------------------- grids, methods, seeds
@@ -213,55 +219,79 @@ def limits_from(ffs, sens_by_ff, target):
 
 
 def bootstrap_setting(args):
-    """All resamples of one (grid, depth, noise): per version, method and basis, the limit of every resample."""
-    grid, depth, noise, n_boot, check_all = args
+    """All resamples of one (grid, depth, noise): per version, method and basis, the limit of every resample.
+
+    refined (main grid only, Task 09 follow-up): the limits use the 14-point FF grid. The 8 grid FFs draw from the
+    same streams in the same order as without refined (so they get exactly the same resamples, and limits8 below
+    reproduces the 8-FF run); the extra FFs draw from their own streams (5, 0, i_depth, i_noise, 2 / 3)."""
+    grid, depth, noise, n_boot, check_all, refined = args
     config = grid_config(grid)
     tables = repo_path(config["paths"]["results"]) / "tables"
     results = pd.read_csv(tables / "results_all.csv", dtype=str, keep_default_na=False)
-    ffs = sorted(config["grid"]["fetal_fraction"])
+    ffs8 = sorted(config["grid"]["fetal_fraction"])
+    extra_ffs = sorted(config["evaluation"]["limit_extra_ff"]) if refined else []
+    ffs = sorted(ffs8 + extra_ffs)
+    col = {ff: i for i, ff in enumerate(ffs)}
     target, target_sens = config["methods"]["target_fpr"], config["evaluation"]["sensitivity_target"]
-    conds = [load_condition(grid, ff, depth, noise, results, config) for ff in ffs]
+    conds = [load_condition(grid, ff, depth, noise, results, config) for ff in ffs8]
+    if refined:
+        extra_results = pd.read_csv(repo_path(REFINED_DIR) / "results_all.csv", dtype=str, keep_default_na=False)
+        conds_x = [load_condition(grid, ff, depth, noise, extra_results, config) for ff in extra_ffs]
     rng_test, rng_ref = stream(config, grid, depth, noise, 0), stream(config, grid, depth, noise, 1)
+    rng_test_x, rng_ref_x = stream(config, grid, depth, noise, 2), stream(config, grid, depth, noise, 3)
     versions = versions_of(grid)
     methods = {v: methods_of(grid, v) for v in versions}
-    # sens[version][method][basis]: array (n_boot, n_ff); resample 0 of `identity` is the original data
+    scored = methods["test" if "test" in versions else "test+ref"]
+    # sens[version][method][basis]: array (n_boot, n_ff) in ffs order
     sens = {v: {m: {b: np.empty((n_boot, len(ffs))) for b in BASES} for m in methods[v]} for v in versions}
-    identity = {m: [] for m in methods["test" if "test" in versions else "test+ref"]}
+    identity = {m: [None] * len(ffs) for m in scored}
     n_same = 0
-    for j, cond in enumerate(conds):   # self-test: no resampling reproduces the paper's inputs
+    pairs_ff = [(ff, c) for ff, c in zip(ffs8, conds)] + ([(ff, c) for ff, c in zip(extra_ffs, conds_x)] if refined else [])
+    for ff, cond in pairs_ff:   # self-test: no resampling reproduces the paper's inputs
         y = cond["y"]
-        for m in identity:
-            tree = m in TREES
+        for m in scored:
             # rounded as results_all.csv stores them (%.10g), which is what detection_limits read
-            identity[m].append((float(f"{sens_of(cond['z'][m][y == 1], cond['thr'][m], tree):.10g}"),
-                                float(f"{sens_at_fpr(y, cond['z'][m], target):.10g}")))
+            identity[m][col[ff]] = (float(f"{sens_of(cond['z'][m][y == 1], cond['thr'][m], m in TREES):.10g}"),
+                                    float(f"{sens_at_fpr(y, cond['z'][m], target):.10g}"))
+
+    def score(b, j, cond, rt, rr):
+        nonlocal n_same
+        idx = np.r_[rt.integers(0, cond["n_normal"], cond["n_normal"]),
+                    cond["n_normal"] + rt.integers(0, cond["n_t21"], cond["n_t21"])]
+        idx_ref = rr.integers(0, cond["n_ref"], cond["n_ref"]) if "test+ref" in versions else None
+        y = cond["y"][idx]
+        for m in scored:
+            s = cond["z"][m][idx]
+            sat = sens_at_fpr(y, s, target)
+            if "test" in versions:
+                sens["test"][m]["sens"][b, j] = sens_of(s[y == 1], cond["thr"][m], m in TREES)
+                sens["test"][m]["sens_at_fpr"][b, j] = sat
+            if "test+ref" in versions and m not in TREES:
+                ref = cond["ref"][m][idx_ref]
+                z = (cond["raw"][m][idx] - float(ref.mean())) / float(ref.std(ddof=1))
+                sens["test+ref"][m]["sens"][b, j] = sens_of(z[y == 1], cond["thr"][m], False)
+                sens["test+ref"][m]["sens_at_fpr"][b, j] = sat
+                if b < CHECK_SAME or check_all:
+                    n_same += 1
+                    if sens_at_fpr(y, z, target) != sat:
+                        raise ValueError(f"self-test: {grid} {depth} {noise} FF {ffs[j]} {m} resample {b}: "
+                                         f"sens_at_fpr differs between the original and the resampled reference")
+
     for b in range(n_boot):
-        for j, cond in enumerate(conds):
-            idx = np.r_[rng_test.integers(0, cond["n_normal"], cond["n_normal"]),
-                        cond["n_normal"] + rng_test.integers(0, cond["n_t21"], cond["n_t21"])]
-            idx_ref = rng_ref.integers(0, cond["n_ref"], cond["n_ref"]) if "test+ref" in versions else None
-            y = cond["y"][idx]
-            for m in methods["test" if "test" in versions else "test+ref"]:
-                s = cond["z"][m][idx]
-                sat = sens_at_fpr(y, s, target)
-                if "test" in versions:
-                    sens["test"][m]["sens"][b, j] = sens_of(s[y == 1], cond["thr"][m], m in TREES)
-                    sens["test"][m]["sens_at_fpr"][b, j] = sat
-                if "test+ref" in versions and m not in TREES:
-                    ref = cond["ref"][m][idx_ref]
-                    z = (cond["raw"][m][idx] - float(ref.mean())) / float(ref.std(ddof=1))
-                    sens["test+ref"][m]["sens"][b, j] = sens_of(z[y == 1], cond["thr"][m], False)
-                    sens["test+ref"][m]["sens_at_fpr"][b, j] = sat
-                    if b < CHECK_SAME or check_all:
-                        n_same += 1
-                        if sens_at_fpr(y, z, target) != sat:
-                            raise ValueError(f"self-test: {grid} {depth} {noise} FF {ffs[j]} {m} resample {b}: "
-                                             f"sens_at_fpr differs between the original and the resampled reference")
+        for ff, cond in zip(ffs8, conds):             # same order and streams as the 8-FF run
+            score(b, col[ff], cond, rng_test, rng_ref)
+        for ff, cond in (zip(extra_ffs, conds_x) if refined else ()):
+            score(b, col[ff], cond, rng_test_x, rng_ref_x)
     limits = {v: {m: {bs: limits_from(ffs, sens[v][m][bs], target_sens) for bs in BASES} for m in methods[v]}
               for v in versions}
-    ident = {m: {"sens": crossing(ffs, [s for s, _ in identity[m]], target_sens),
-                 "sens_at_fpr": crossing(ffs, [a for _, a in identity[m]], target_sens)} for m in identity}
-    return {"grid": grid, "depth": depth, "noise": noise, "limits": limits, "identity": ident, "n_same": n_same}
+    out = {"grid": grid, "depth": depth, "noise": noise, "refined": refined, "limits": limits, "n_same": n_same,
+           "identity": {m: {"sens": crossing(ffs, [s for s, _ in identity[m]], target_sens),
+                            "sens_at_fpr": crossing(ffs, [a for _, a in identity[m]], target_sens)} for m in identity}}
+    if refined:   # the same resamples on the 8 grid FFs only, to check against the 8-FF run
+        cols8 = [col[ff] for ff in ffs8]
+        out["limits8"] = {v: {m: {bs: limits_from(ffs8, sens[v][m][bs][:, cols8], target_sens) for bs in BASES}
+                              for m in methods[v]} for v in versions}
+    return out
 
 
 # ---------------------------------------------------------------- summaries
@@ -277,9 +307,11 @@ def ci(values, level, min_share):
     return share, float(lo), float(hi)
 
 
-def paper_limits(config):
-    """The paper's limits of one grid (its detection_limits.csv), per basis: columns ff_limit, ff_limit_text."""
-    lim = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "detection_limits.csv", dtype={"noise": str})
+def paper_limits(config, refined=False):
+    """The paper's limits of one grid (its detection_limits.csv, or detection_limits_refined.csv on the 14-point
+    grid), per basis: columns ff_limit, ff_limit_text."""
+    name = "detection_limits_refined.csv" if refined else "detection_limits.csv"
+    lim = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / name, dtype={"noise": str})
     lim = lim.set_index(["method", "depth", "noise"])
     return {"sens": lim[["ff_limit", "ff_limit_text"]], "sens_at_fpr":
             lim[["ff_limit_at_fpr", "ff_limit_at_fpr_text"]].set_axis(["ff_limit", "ff_limit_text"], axis=1)}
@@ -287,7 +319,7 @@ def paper_limits(config):
 
 def check_identity(res, config):
     """Self-test: with no resampling, the limits equal detection_limits.csv (both bases, every method)."""
-    paper = paper_limits(config)
+    paper = paper_limits(config, res["refined"])
     worst = 0
     for m, by in res["identity"].items():
         for basis, (v, text) in by.items():
@@ -314,9 +346,12 @@ def pooled_fpr(results, depth, noise):
 def tables_for(res, config):
     u = config["uncertainty"]
     cfg = grid_config(res["grid"])
-    paper = paper_limits(cfg)
+    paper = paper_limits(cfg, res["refined"])
     results = pd.read_csv(repo_path(cfg["paths"]["results"]) / "tables" / "results_all.csv", dtype=str,
                           keep_default_na=False)
+    if res["refined"]:   # pooled FPR over all 14 FFs
+        results = pd.concat([results, pd.read_csv(repo_path(REFINED_DIR) / "results_all.csv", dtype=str,
+                                                  keep_default_na=False)], ignore_index=True)
     fpr = pooled_fpr(results, res["depth"], res["noise"])
     rows, drows = [], []
     key = {"grid": res["grid"], "depth": res["depth"], "noise": res["noise"]}
@@ -346,6 +381,26 @@ LIMIT_COLS = ["grid", "method", "depth", "noise", "version", "basis", "limit", "
               "share_numeric", "pooled_test_fpr"]
 DIFF_COLS = ["grid", "pair", "depth", "noise", "version", "basis", "diff", "ci_lo", "ci_hi", "share_numeric", "clear",
              "primary"]
+
+
+def check_task09(res, config):
+    """Self-test (refined): the same resamples restricted to the 8 grid FFs reproduce the 8-FF CI tables
+    (detection_limits_ci.csv, limit_differences_ci.csv) exactly, as written."""
+    rows, drows = tables_for({**res, "refined": False, "limits": res["limits8"]}, config)
+    tables = repo_path(config["paths"]["results"]) / "tables"
+    for got, name, key in ((rows, "detection_limits_ci.csv", ["method", "version", "basis"]),
+                           (drows, "limit_differences_ci.csv", ["pair", "version", "basis"])):
+        saved = pd.read_csv(tables / name, dtype=str, keep_default_na=False)
+        saved = saved[(saved["grid"] == res["grid"]) & (saved["depth"] == str(res["depth"]))
+                      & (saved["noise"] == res["noise"])].set_index(key)
+        for r in got:
+            row = saved.loc[tuple(r[k] for k in key)]
+            for c in ("ci_lo", "ci_hi", "share_numeric"):
+                want, have = row[c], ("" if pd.isna(r[c]) else f"{r[c]:.6g}")
+                if want != have:
+                    raise ValueError(f"self-test: refined run on the 8 grid FFs, {name} {r} {c}: {have} != {want}")
+    print(f"self-test {res['grid']} {res['depth']:,} {res['noise']}: same resamples on the 8 grid FFs reproduce "
+          f"the 8-FF CIs exactly ({len(rows)} limits, {len(drows)} differences)")
 
 
 def self_test_ci():
@@ -403,6 +458,8 @@ def main():
     parser.add_argument("--check-all", action="store_true", help="check sens_at_fpr identity on every resample")
     parser.add_argument("--jobs", type=int, default=1)
     parser.add_argument("--n-boot", type=int, default=None, help="override uncertainty.n_boot (quick tests only)")
+    parser.add_argument("--refined", action="store_true",
+                        help="main grid on the 14-point FF grid (writes *_ci_refined.csv; Task 09 follow-up)")
     args = parser.parse_args()
     config = load_config()
     u = config["uncertainty"]
@@ -411,18 +468,22 @@ def main():
     self_test_ci()
     start = time.time()
 
-    grids = [MAIN] + list(u["scenarios"])
+    grids = [MAIN] if args.refined else [MAIN] + list(u["scenarios"])
     if args.setting:
-        jobs = [(MAIN, int(args.setting[0]), args.setting[1], u["n_boot"], args.check_all)]
+        jobs = [(MAIN, int(args.setting[0]), args.setting[1], u["n_boot"], args.check_all, args.refined)]
     else:
-        jobs = [(g, d, n, u["n_boot"], args.check_all) for g in grids for d, n in settings(config, g)]
+        jobs = [(g, d, n, u["n_boot"], args.check_all, args.refined) for g in grids for d, n in settings(config, g)]
     if args.cache_only:
-        for g, d, n, _, _ in jobs:
+        for g, d, n, _, _, refined in jobs:
             cfg = grid_config(g)
             results = pd.read_csv(repo_path(cfg["paths"]["results"]) / "tables" / "results_all.csv", dtype=str,
                                   keep_default_na=False)
             for ff in cfg["grid"]["fetal_fraction"]:
                 load_condition(g, ff, d, n, results, cfg)
+            if refined:
+                extra = pd.read_csv(repo_path(REFINED_DIR) / "results_all.csv", dtype=str, keep_default_na=False)
+                for ff in cfg["evaluation"]["limit_extra_ff"]:
+                    load_condition(g, ff, d, n, extra, cfg)
             print(f"cache ok: {g} {d:,} {n} ({time.time() - start:.0f} s)")
         return
 
@@ -431,9 +492,12 @@ def main():
     rows, drows = [], []
     for res in out:
         n_ident = check_identity(res, grid_config(res["grid"]))
-        print(f"self-test {res['grid']} {res['depth']:,} {res['noise']}: no-resampling limits == detection_limits.csv "
+        print(f"self-test {res['grid']} {res['depth']:,} {res['noise']}: no-resampling limits == "
+              f"{'detection_limits_refined.csv' if res['refined'] else 'detection_limits.csv'} "
               f"({n_ident} method x basis) ok; sens_at_fpr identical with the resampled reference in {res['n_same']} "
               f"method x FF x resample checks")
+        if res["refined"]:
+            check_task09(res, config)
         r, d = tables_for(res, config)
         rows += r
         drows += d
@@ -453,11 +517,12 @@ def main():
         print(f"\nRun time {elapsed:.0f} s ({u['n_boot']} resamples)")
         return
     tables = repo_path(config["paths"]["results"]) / "tables"
-    limits.to_csv(tables / "detection_limits_ci.csv", index=False, float_format="%.6g")
-    diffs.to_csv(tables / "limit_differences_ci.csv", index=False, float_format="%.6g")
+    tag = "_refined" if args.refined else ""
+    limits.to_csv(tables / f"detection_limits_ci{tag}.csv", index=False, float_format="%.6g")
+    diffs.to_csv(tables / f"limit_differences_ci{tag}.csv", index=False, float_format="%.6g")
     summary(diffs)
-    print(f"\nSaved detection_limits_ci.csv ({len(limits)} rows) and limit_differences_ci.csv ({len(diffs)} rows); "
-          f"{elapsed:.0f} s")
+    print(f"\nSaved detection_limits_ci{tag}.csv ({len(limits)} rows) and limit_differences_ci{tag}.csv "
+          f"({len(diffs)} rows); {elapsed:.0f} s")
 
 
 if __name__ == "__main__":

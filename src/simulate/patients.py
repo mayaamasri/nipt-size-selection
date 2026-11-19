@@ -28,7 +28,7 @@ Seeds (all from config seed):
                  in the config grid lists and in GROUPS, so a condition gives the same patients
                  whatever order conditions are run in
   refined-grid   SeedSequence(seed, spawn_key=(7, k, i_depth, i_noise, i_group)) for an FF that is not on the grid
-  patients       but in uncertainty.refine_ff (Task 09, 9C), k = its position in that list; grid FFs never use it
+  patients       but in evaluation.limit_extra_ff (Task 09), k = its position in that list; grid FFs never use it
   2E QC patients SeedSequence(seed, spawn_key=(2, k)), k fixed per QC run (QC_RUNS)
   (the pool uses spawn_key (0, k), see pool.py)
 
@@ -160,14 +160,14 @@ def _grid_index(values, value, name):
 
 def patient_seed(config, ff, depth, noise, group):
     """SeedSequence for one (FF, depth, noise level, group) of the grid, or of an off-grid FF in
-    uncertainty.refine_ff (Task 09 refined grid: family 7 instead of 1)."""
+    evaluation.limit_extra_ff (Task 09 refined grid: family 7 instead of 1)."""
     grid = config["grid"]
     if grid["noise_sigma"][0] not in NO_NOISE:
         raise ValueError(f"the no-noise level must be first in grid.noise_sigma (seeds use its index), "
                          f"got {grid['noise_sigma']}")
     on_grid = any(math.isclose(v, ff, rel_tol=1e-9, abs_tol=0.0) for v in grid["fetal_fraction"])
-    if not on_grid and ff in [float(v) for v in config.get("uncertainty", {}).get("refine_ff", [])]:
-        family, i_ff = 7, _grid_index(config["uncertainty"]["refine_ff"], ff, "uncertainty.refine_ff")
+    if not on_grid and ff in [float(v) for v in config.get("evaluation", {}).get("limit_extra_ff", [])]:
+        family, i_ff = 7, _grid_index(config["evaluation"]["limit_extra_ff"], ff, "evaluation.limit_extra_ff")
     else:
         family, i_ff = 1, _grid_index(grid["fetal_fraction"], ff, "fetal_fraction")
     key = (family,

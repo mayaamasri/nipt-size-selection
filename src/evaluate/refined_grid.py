@@ -5,7 +5,7 @@ The bootstrap CIs (src.evaluate.limit_ci) cover sampling error, not interpolatio
 uncertainty.refine_max_diff, the grid interval holding each of the two limits gets its midpoint FF as an extra
 condition (both midpoints if the limits lie in different intervals). The resulting list must equal
 uncertainty.refine_conditions in the config (self-test), which fixes the patient seeds: family 7,
-(7, k, i_depth, i_noise, i_group), k = position of the FF in uncertainty.refine_ff (src.simulate.patients), so the
+(7, k, i_depth, i_noise, i_group), k = position of the FF in evaluation.limit_extra_ff (src.simulate.patients), so the
 main grid's seeds are untouched.
 
 Each extra condition is run end to end with run_condition (all groups, all methods, new trees) and written to
@@ -20,8 +20,14 @@ Writes:
   results/tables/limits_refined_pairs.csv  per setting and 9B pair: interpolated and refined difference and
       ranking_changed and change_type: flip (the order reverses), became_tie (the refined difference is within
       LIMIT_TIE = 0.05 points) or tie_resolved (a tie on the interpolated grid is ordered on the refined one)
+--all-settings (Task 09 follow-up, decision #19) runs every evaluation.limit_extra_ff at every depth x noise
+setting (72 conditions; the 16 above are reused, not rerun) into the same folder, for the 14-point limit grid
+(src.evaluate.detection_limits_refined), and first checks that two of the existing conditions reproduce exactly
+with the current seeds. The 9C analysis always uses only its own 16 conditions, so its outputs do not change.
+
 Run from the repo root (~1 min; conditions already in results/refined_grid are not rerun unless --rerun):
     python -m src.evaluate.refined_grid
+    python -m src.evaluate.refined_grid --all-settings     (~3 min for the 56 new conditions)
 """
 
 import argparse
@@ -66,8 +72,8 @@ def self_test(config, needed):
     if listed != derived:
         raise ValueError(f"uncertainty.refine_conditions {listed} != conditions derived from detection_limits.csv "
                          f"{derived}")
-    if not set(ff for ff, _, _ in derived) <= set(float(v) for v in config["uncertainty"]["refine_ff"]):
-        raise ValueError("an extra FF is missing from uncertainty.refine_ff")
+    if not set(ff for ff, _, _ in derived) <= set(float(v) for v in config["evaluation"]["limit_extra_ff"]):
+        raise ValueError("an extra FF is missing from evaluation.limit_extra_ff")
     print(f"self-test: {len(derived)} extra conditions derived from detection_limits.csv == config list ok")
 
 
@@ -107,8 +113,10 @@ def refined_tables(config, needed, extra):
         s["pairs"].update(pairs)
     rows, prow = [], []
     for (depth, noise), s in settings.items():
-        both = pd.concat([main[(main["depth"] == depth) & (main["noise"] == noise)],
-                          extra[(extra["depth"] == depth) & (extra["noise"] == noise)]])
+        # only this setting's 9C FFs: results/refined_grid also holds the full 14-point grid (Task 09 follow-up)
+        mine = extra[(extra["depth"] == depth) & (extra["noise"] == noise)
+                     & extra["ff"].map(lambda f: any(np.isclose(f, x, rtol=1e-9, atol=0) for x in s["ffs"]))]
+        both = pd.concat([main[(main["depth"] == depth) & (main["noise"] == noise)], mine])
         refined = {}
         for m in sorted({x for p in PAIRS[MAIN] for x in p}):
             g = both[both["method"] == m].sort_values("ff")
@@ -138,13 +146,40 @@ def refined_tables(config, needed, extra):
     return pd.DataFrame(rows), pd.DataFrame(prow)
 
 
+def all_conditions(config):
+    """Every evaluation.limit_extra_ff at every depth x noise setting, in grid order: [(ff, depth, noise, [])]."""
+    g = config["grid"]
+    return [(float(ff), depth, str(noise), []) for noise in g["noise_sigma"] for depth in g["depth"]
+            for ff in config["evaluation"]["limit_extra_ff"]]
+
+
+def seed_check(config, conditions):
+    """Self-test: the given existing conditions rerun in memory equal their rows in results/refined_grid exactly
+    (as run_condition writes them), so the extra FFs still get the seeds they were run with."""
+    from src.evaluate.check_rerun import as_written, saved_rows
+    from src.evaluate.run_condition import sort_table
+    tables_dir = repo_path(OUT) / "tables"
+    for ff, depth, noise in conditions:
+        tables, _ = run_condition(config, ff, depth, noise)
+        for name, table in tables.items():
+            new, old = as_written(sort_table(table, name, config)), saved_rows(tables_dir / name, ff, depth, noise)
+            if new.shape != old.shape or not (new == old).all().all():
+                raise ValueError(f"seed check: FF {ff} {depth} {noise} {name} differs from results/refined_grid")
+        print(f"self-test seeds: FF {ff:g}, {depth:,}, {noise} reproduces results/refined_grid exactly")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--rerun", action="store_true", help="rerun extra conditions that already have rows")
+    parser.add_argument("--all-settings", action="store_true",
+                        help="run every limit_extra_ff at every setting (14-point grid), then the 9C analysis")
     args = parser.parse_args()
     config = load_config()
     needed = needed_conditions(config)
     self_test(config, needed)
+    if args.all_settings:
+        seed_check(config, [(0.025, 10_000_000, "realistic"), (0.09, 1_000_000, "low")])
+        run_extra(config, all_conditions(config), args.rerun)
     extra = run_extra(config, needed, args.rerun)
     limits, pairs = refined_tables(config, needed, extra)
     tables = repo_path(config["paths"]["results"]) / "tables"

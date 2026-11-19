@@ -13,8 +13,14 @@ S        tableS_c2_importances.csv      C2: feature importances and chosen max d
 S        tableS_w_vs_wfixed.csv         W vs W_fixedFF per condition (sens, sens_at_fpr, AUC and differences)
 S        tableS_w_vs_wfixed_limits.csv  W vs W_fixedFF detection limits per depth x noise
 
-Reads results_all.csv, detection_limits.csv, bopt_separation.csv, c2_feature_importances.csv and the
-length/mappability model; writes all tables to results/tables/. Run from the repo root:
+Detection limits (Table 1, which also holds the conservative and sens_at_fpr limits, and the limits in
+tableS_w_vs_wfixed_limits.csv) come from detection_limits_refined.csv: the main grid on the 14-point FF grid
+(Task 09 follow-up, decision #19; python -m src.evaluate.detection_limits_refined). The per-condition tables
+(tableS_w_vs_wfixed.csv, B-opt, C2) stay on the 8 simulated grid FFs of results_all.csv.
+
+Reads results_all.csv, detection_limits_refined.csv, results/refined_grid/tables/results_all.csv (extra FFs, for
+the Table 1 caption), bopt_separation.csv, c2_feature_importances.csv and the length/mappability model; writes all
+tables to results/tables/. Run from the repo root:
     python -m src.evaluate.tables
 """
 
@@ -25,15 +31,17 @@ from src.config import load_config, repo_path
 from src.simulate.patients import origin_matrices, window_stats
 
 CONDITION = ["ff", "depth", "noise"]
+REFINED_DIR = "results/refined_grid/tables"
 TABLE1_METHODS = ["A", "B", "B-opt", "W", "C1", "C2"]
 COMMERCIAL_MIN_FF = 0.04
 TREES = ("C1", "C2")
 
 CAPTION_TABLE1 = (
     "Table 1. Detection limits (FF at which sensitivity reaches 95% for the last time, decision #13) per depth "
-    "and noise level: main estimate from the sensitivity at each method's own threshold, conservative estimate "
-    "from its Wilson 95% lower bound, and a check from the sensitivity at FPR 0.135% (flagged if more than one grid step from the "
-    "main limit; {n_flags} flags). ✓: at or below the 4% commercial minimum. W has the lowest limit in "
+    "and noise level, on a 14-point FF grid ({grid_text}%; every point simulated, limits interpolated linearly "
+    "between neighbouring points): main estimate from the sensitivity at each method's own threshold, conservative "
+    "estimate from its Wilson 95% lower bound, and a check from the sensitivity at FPR 0.135% (flagged if more than "
+    "one step of the original 8-point grid from the main limit; {n_flags} flags). ✓: at or below the 4% commercial minimum. W has the lowest limit in "
     "{w_lowest} of {n_rows} depth × noise rows ({exceptions}). Tree limits use each tree's real threshold, so "
     "in {n_nobody} of {n_tree_groups} tree groups the limit is interpolated from a grid point where the tree "
     "flags nobody (sensitivity 0); this raises the limit by up to {max_shift:.2f} FF points compared with "
@@ -63,7 +71,7 @@ CAPTION_W = (
 )
 CAPTION_W_LIMITS = (
     "Table S4. Detection limits of W with weights from the true FF and with weights fixed at FF {fixed_ff:.0%} (W_fixedFF "
-    "columns) per depth and noise level (main and conservative); they "
+    "columns) per depth and noise level (main and conservative, 14-point FF grid as in Table 1); they "
     "differ by at most {max_diff:.2f} FF points."
 )
 
@@ -186,7 +194,7 @@ def build_tables(config):
     """{file name: table} for every table this module writes."""
     tables = repo_path(config["paths"]["results"]) / "tables"
     results = pd.read_csv(tables / "results_all.csv")
-    limits = pd.read_csv(tables / "detection_limits.csv")
+    limits = pd.read_csv(tables / "detection_limits_refined.csv")   # 14-point FF grid (decision #19)
     sep = pd.read_csv(tables / "bopt_separation.csv")
     imp = pd.read_csv(tables / "c2_feature_importances.csv")
     w_per, w_lim = w_tables(results, limits, config)
@@ -204,12 +212,16 @@ def captions(config, out=None):
     """{table file name: caption}, with every number computed from the data."""
     out = build_tables(config) if out is None else out
     results = pd.read_csv(repo_path(config["paths"]["results"]) / "tables" / "results_all.csv")
+    extra = pd.read_csv(repo_path(REFINED_DIR) / "results_all.csv")   # extra FFs of the 14-point limit grid
+    grid_text = ", ".join(f"{100 * f:g}" for f in sorted(config["grid"]["fetal_fraction"]
+                                                        + config["evaluation"]["limit_extra_ff"]))
     high = results[(results["ff"] >= 0.10 - 1e-12) & results["method"].isin(TABLE1_METHODS)]
     bopt, w_per, w_lim = out["tableS_bopt_cutoff.csv"], out["tableS_w_vs_wfixed.csv"], out["tableS_w_vs_wfixed_limits.csv"]
     counts = bopt["chosen_upper_bp"].value_counts().sort_index()
     return {
         "table1_detection_limits.csv": CAPTION_TABLE1.format(
-            **table1_caption_values(out["table1_detection_limits.csv"], results)),
+            grid_text=grid_text,
+            **table1_caption_values(out["table1_detection_limits.csv"], pd.concat([results, extra], ignore_index=True))),
         "table2_realism_yang.csv": CAPTION_TABLE2,
         "tableS_bopt_cutoff.csv": CAPTION_BOPT.format(
             counts=", ".join(f"{c} bp ×{n}" for c, n in counts.items()), mean=100 * bopt["diff_sens_at_fpr"].mean(),

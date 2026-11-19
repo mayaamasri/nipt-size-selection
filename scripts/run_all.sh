@@ -119,7 +119,7 @@ step "Figure 3" python -m src.evaluate.figures.fig3_b_minus_a
 step "Figure 4" python -m src.evaluate.figures.fig4_breakeven
 step "Figure 5 + supplementary" python -m src.evaluate.figures.fig5_methods
 step "Figure S3 (unified model)" python -m src.evaluate.figures.figS_unified_model
-step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
+# Tables 1, 2 + supplementary: after the 14-point detection limits (section 4d), since Table 1 and Table S4 use them
 
 # --- 4b. Robustness to the fetal length profile (Task 07, decision #17) ---------------------------
 # Scenario inputs and the model's predictions (7A, 7C), no simulation: seconds
@@ -164,11 +164,21 @@ step "Figure S5 (short-fragment noise)" python -m src.evaluate.figures.figS_shor
 step "detection-limit CIs" python -u -m src.evaluate.limit_ci --jobs 6
 # Refined FF grid (9C): 16 extra conditions (midpoint FFs, seeds family 7) where 9B pairs differ by < 0.2 points,
 # written to results/refined_grid; conditions already there are reused, rerun with --robustness: ~35 s
+# Main-grid detection limits on the 14-point FF grid (Task 09 follow-up, decision #19): every
+# evaluation.limit_extra_ff (1.5, 2.5, 3.5, 5, 7, 9%) at every depth x noise setting, 72 conditions in
+# results/refined_grid (seeds family 7; the 16 9C conditions are reused). Conditions already there are reused;
+# with --robustness all are rerun. Sequential ~4 min for the 72 (~3 min for the 56 not in 9C), then seconds for
+# the 9C analysis (only its own 16 conditions) and for the limits and dip flags.
 if [ "$ROBUSTNESS" = 1 ]; then
-  step "refined FF grid" python -u -m src.evaluate.refined_grid --rerun
+  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings --rerun
 else
-  step "refined FF grid" python -u -m src.evaluate.refined_grid
+  step "extra FF conditions + 9C check" python -u -m src.evaluate.refined_grid --all-settings
 fi
+step "14-point detection limits" python -m src.evaluate.detection_limits_refined
+# Bootstrap CIs on the 14-point grid (main grid, both versions; the 8 grid FFs keep the resamples above):
+# sequential ~25 min, ~5 min with --jobs 6 (extra caches ~3 min on the first run)
+step "detection-limit CIs, 14-point grid" python -u -m src.evaluate.limit_ci --refined --jobs 6
+step "Tables 1, 2 + supplementary" python -m src.evaluate.tables
 
 # All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
 step "captions" python -m src.evaluate.captions
