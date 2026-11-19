@@ -42,6 +42,7 @@ src/evaluate/figures/  one script per manuscript figure
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
 results/robustness/    per-scenario tables of the robustness analyses (Task 07 fetal profiles, Task 08 short-fragment noise)
+results/refined_grid/  extra FF conditions of the refined-grid check (Task 09)
 manuscript/            manuscript source
 ```
 
@@ -132,6 +133,32 @@ the G1 fetal profile, and only the low and realistic noise levels (64 conditions
 `bash scripts/run_all.sh --robustness` also reruns them: sequential time ~9 min per scenario (~18 min for both);
 they can also run in parallel, one job per scenario.
 
+### Uncertainty of the detection limits (Task 09)
+
+`python -m src.evaluate.limit_ci --jobs 6` bootstraps the detection limits (1,000 paired resamples: every method
+is scored on the same resampled patients; percentile 95% CIs). What each version holds fixed:
+
+| Version | Resampled | Held fixed | Methods |
+|---|---|---|---|
+| `test` | test normals (10,000) and test T21 (2,000), per FF | reference mean and SD of every statistic, trained trees, tree thresholds, B-opt's cutoff | all |
+| `test+ref` | the same test resamples **and** the 2,000 reference normals (new mean and SD) | B-opt's cutoff and the z > 3 threshold (trees not included) | z-score methods only |
+
+Both versions condition on the trained models and thresholds, so training and calibration variability are not
+included. `test+ref` is the main version for z-score comparisons (it includes the reference's sampling error,
+which moves all of a condition's normals together); `test` is kept for comparison and is the only version for the
+trees. `sens_at_fpr` depends only on the ranking within the test set, so it is identical in both versions (checked
+exactly). Each limit is reported on two bases: `sens` (the method at its own threshold, the paper's limit) and
+`sens_at_fpr` (all methods at the same FPR). For the trees (C1, C2) the two differ in an important way: on `sens`
+they are compared at their own achieved FPRs (`pooled_test_fpr`), so a clear difference may come from a different
+FPR rather than better detection; `sens_at_fpr` is the fair comparison, but with only a few distinct leaf scores
+its CIs are lumpy (the limit jumps when the number of resampled normals in the top leaf crosses the target FPR).
+A tree pair is therefore never called clear from the `sens` basis alone. A difference gets a CI only if both
+limits are numeric in at least 95% of resamples. Seeds: family 5 (test and reference streams per setting).
+
+`python -m src.evaluate.refined_grid` checks the linear interpolation between grid FFs: it simulates the midpoint
+FF of the interval holding two close limits (16 conditions, seeds family 7, listed in `uncertainty.refine_conditions`)
+and recomputes those limits on the refined grid.
+
 ## Where each figure and table comes from
 
 | Output (`results/`) | Script | Content |
@@ -144,6 +171,8 @@ they can also run in parallel, one job per scenario.
 | `figures/figS_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
 | `figures/figS_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
 | `figures/figS_short_noise` | `src/evaluate/figures/figS_short_noise.py` | B and W vs A with extra noise on short fragments (k = 1, 1.5, 2), FF 4%: model vs simulation |
+| `tables/detection_limits_ci.csv`, `limit_differences_ci.csv` | `src/evaluate/limit_ci.py` | bootstrap 95% CIs of the detection limits (with each method's pooled test FPR) and of method differences (`clear` = CI excludes 0), main grid and shift_p10 / blend50 |
+| `tables/limits_refined_grid.csv`, `limits_refined_pairs.csv` | `src/evaluate/refined_grid.py` | interpolated vs refined-grid limits where pairs differ by < 0.2 points, and the rankings that change |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
 | `tables/results_all.csv` and per-condition tables | `src/evaluate/run_condition.py` | all metrics per condition × method |
 | `tables/detection_limits.csv` | `src/evaluate/detection_limits.py` | detection limits for all 14 methods |

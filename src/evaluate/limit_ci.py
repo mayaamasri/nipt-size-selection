@@ -232,8 +232,9 @@ def bootstrap_setting(args):
         y = cond["y"]
         for m in identity:
             tree = m in TREES
-            identity[m].append((sens_of(cond["z"][m][y == 1], cond["thr"][m], tree),
-                                sens_at_fpr(y, cond["z"][m], target)))
+            # rounded as results_all.csv stores them (%.10g), which is what detection_limits read
+            identity[m].append((float(f"{sens_of(cond['z'][m][y == 1], cond['thr'][m], tree):.10g}"),
+                                float(f"{sens_at_fpr(y, cond['z'][m], target):.10g}")))
     for b in range(n_boot):
         for j, cond in enumerate(conds):
             idx = np.r_[rng_test.integers(0, cond["n_normal"], cond["n_normal"]),

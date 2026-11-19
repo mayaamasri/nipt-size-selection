@@ -152,6 +152,24 @@ fi
 # Summary across k (questions 1-6) and Fig. S5: seconds
 step "short-noise summary" python -m src.evaluate.robustness_snoise
 step "Figure S5 (short-fragment noise)" python -m src.evaluate.figures.figS_short_noise
+# --- 4d. Uncertainty of the detection limits (Task 09, decision #19) ------------------------------
+# Paired bootstrap (1,000 resamples) of the limits and of method differences, main grid (12 settings, both versions)
+# and shift_p10 / blend50 (test+ref). Two versions:
+#   test      test normals and T21 resampled; reference, trained trees, tree thresholds and B-opt's cutoff fixed
+#   test+ref  the 2,000 reference normals resampled too (new mean and SD); z-score methods only
+# Per-patient statistics and tree scores are cached under data/processed/limit_ci_cache (~190 MB, first run
+# ~6 min to build) and checked against results_all.csv before use. Sequential time ~30 min (one setting ~70 s);
+# measured 335 s with --jobs 6 on a 10-core Mac once the caches exist. Runs after the robustness blocks
+# because it reads the shift_p10 and blend50 tables.
+step "detection-limit CIs" python -u -m src.evaluate.limit_ci --jobs 6
+# Refined FF grid (9C): 16 extra conditions (midpoint FFs, seeds family 7) where 9B pairs differ by < 0.2 points,
+# written to results/refined_grid; conditions already there are reused, rerun with --robustness: ~35 s
+if [ "$ROBUSTNESS" = 1 ]; then
+  step "refined FF grid" python -u -m src.evaluate.refined_grid --rerun
+else
+  step "refined FF grid" python -u -m src.evaluate.refined_grid
+fi
+
 # All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
 step "captions" python -m src.evaluate.captions
 

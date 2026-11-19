@@ -18,7 +18,8 @@ Writes:
       is outside the grid interval of the interpolated one (a dip in sensitivity at a new FF moved the last
       crossing), flagged separately from ranking changes
   results/tables/limits_refined_pairs.csv  per setting and 9B pair: interpolated and refined difference and
-      ranking_changed (the sign flips, or one side becomes a tie within LIMIT_TIE)
+      ranking_changed and change_type: flip (the order reverses), became_tie (the refined difference is within
+      LIMIT_TIE = 0.05 points) or tie_resolved (a tie on the interpolated grid is ordered on the refined one)
 Run from the repo root (~1 min; conditions already in results/refined_grid are not rerun unless --rerun):
     python -m src.evaluate.refined_grid
 """
@@ -127,10 +128,13 @@ def refined_tables(config, needed, extra):
             di = lim.loc[(a, depth, noise), "ff_limit"] - lim.loc[(b, depth, noise), "ff_limit"]
             dr = refined[a] - refined[b]
             sign = lambda x: 0 if abs(x) <= LIMIT_TIE else int(np.sign(x))  # noqa: E731
-            changed = bool(np.isfinite(di) and np.isfinite(dr) and sign(di) != sign(dr))
+            change = "none"
+            if np.isfinite(di) and np.isfinite(dr) and sign(di) != sign(dr):
+                change = ("flip" if sign(di) * sign(dr) == -1 else "became_tie" if sign(dr) == 0
+                          else "tie_resolved")
             prow.append({"depth": depth, "noise": noise, "pair": f"{a}-{b}",
                          "triggered": f"{a}-{b}" in s["pairs"], "diff_interpolated_pts": 100 * di,
-                         "diff_refined_pts": 100 * dr, "ranking_changed": changed})
+                         "diff_refined_pts": 100 * dr, "ranking_changed": change != "none", "change_type": change})
     return pd.DataFrame(rows), pd.DataFrame(prow)
 
 
@@ -157,8 +161,9 @@ def main():
         moved = limits[limits["moved_interval"]]
         print(f"\nLimits moved to another grid interval (dip at a new FF): {len(moved)}")
         print(moved.to_string(index=False) if len(moved) else "  none")
-        flips = pairs[pairs["ranking_changed"]]
-        print(f"\nRanking changes on the refined grid: {len(flips)}")
+        flips = pairs[pairs["ranking_changed"]].sort_values("change_type", kind="stable")
+        counts = flips["change_type"].value_counts().to_dict()
+        print(f"\nRanking changes on the refined grid: {len(flips)} {counts}")
         print(flips.to_string(index=False, float_format=lambda v: f"{v:+.3f}") if len(flips) else "  none")
     print(f"\nSaved {tables / 'limits_refined_grid.csv'} and {tables / 'limits_refined_pairs.csv'}")
 
