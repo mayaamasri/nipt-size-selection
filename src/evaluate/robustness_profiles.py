@@ -222,10 +222,10 @@ def q4_pooled(rows, data):
     return out
 
 
-def q6(name, d, n_normal, target):
+def q6(name, d, n_normal, target, methods=FPR_METHODS):
     res = d["results_all"]
     rows = []
-    for m in FPR_METHODS:
+    for m in methods:
         r = res[res["method"] == m]
         fp = r["fpr"] * n_normal
         if not np.allclose(fp, fp.round(), rtol=0, atol=1e-6):

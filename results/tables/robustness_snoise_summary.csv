@@ -1,0 +1,115 @@
+question,profile,depth,noise,item,value,text
+1,main,all,all,n_sep_ratio_B_A_below_1,0,
+1,main,all,all,n_sens_diff_B_A_sig_negative,0,
+1,snoise_k15,all,all,n_sep_ratio_B_A_below_1,0,
+1,snoise_k15,all,all,n_sens_diff_B_A_sig_negative,0,
+1,snoise_k2,all,all,n_sep_ratio_B_A_below_1,0,
+1,snoise_k2,all,all,n_sens_diff_B_A_sig_negative,0,
+2,main,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.0919782,observed 1.104 -> 1.205; model 1.106 -> 1.204 (+8.9%)
+2,main,limits,low,sep_ratio_B_A_ff4_high_depth_limit,2.42558,"g sigma_A / sigma_B = 2.426 (g = 2.426, sigma_B / sigma_A = 1.000); low-depth limit g sqrt(r) = 1.093"
+2,main,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.286814,observed 1.163 -> 1.497; model 1.157 -> 1.521 (+31.5%)
+2,main,limits,realistic,sep_ratio_B_A_ff4_high_depth_limit,2.42558,"g sigma_A / sigma_B = 2.426 (g = 2.426, sigma_B / sigma_A = 1.000); low-depth limit g sqrt(r) = 1.093"
+2,snoise_k15,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.0722539,observed 1.101 -> 1.180; model 1.102 -> 1.172 (+6.3%)
+2,snoise_k15,limits,low,sep_ratio_B_A_ff4_high_depth_limit,1.65825,"g sigma_A / sigma_B = 1.658 (g = 2.426, sigma_B / sigma_A = 1.463); low-depth limit g sqrt(r) = 1.093"
+2,snoise_k15,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.192267,observed 1.122 -> 1.338; model 1.139 -> 1.356 (+19.0%)
+2,snoise_k15,limits,realistic,sep_ratio_B_A_ff4_high_depth_limit,1.65825,"g sigma_A / sigma_B = 1.658 (g = 2.426, sigma_B / sigma_A = 1.463); low-depth limit g sqrt(r) = 1.093"
+2,snoise_k2,1M->10M,low,sep_ratio_B_A_ff4_change_obs,0.041842,observed 1.088 -> 1.134; model 1.098 -> 1.132 (+3.1%)
+2,snoise_k2,limits,low,sep_ratio_B_A_ff4_high_depth_limit,1.2857,"g sigma_A / sigma_B = 1.286 (g = 2.426, sigma_B / sigma_A = 1.887); low-depth limit g sqrt(r) = 1.093"
+2,snoise_k2,1M->10M,realistic,sep_ratio_B_A_ff4_change_obs,0.0952112,observed 1.109 -> 1.214; model 1.116 -> 1.204 (+7.9%)
+2,snoise_k2,limits,realistic,sep_ratio_B_A_ff4_high_depth_limit,1.2857,"g sigma_A / sigma_B = 1.286 (g = 2.426, sigma_B / sigma_A = 1.887); low-depth limit g sqrt(r) = 1.093"
+3,main,all,all,median_abs_rel_error_B_all,0.00911465,"n 512, p95 3.34%, mean signed +0.24% (t = 1.3)"
+3,main,all,all,median_abs_rel_error_B_without_low_signal,0.00850988,"n 472, p95 2.56%, mean signed +0.23% (t = 1.6)"
+3,main,all,all,median_abs_rel_error_W_all,0.00515079,"n 64, p95 1.80%, mean signed +0.31% (t = 2.6)"
+3,main,all,all,median_abs_rel_error_W_without_low_signal,0.00464411,"n 59, p95 1.55%, mean signed +0.24% (t = 2.3)"
+3,main,all,all,median_abs_rel_error_W_fixedFF_all,0.00475399,"n 64, p95 1.77%, mean signed +0.27% (t = 2.5)"
+3,main,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.00448672,"n 59, p95 1.41%, mean signed +0.22% (t = 2.2)"
+3,snoise_k15,all,all,median_abs_rel_error_B_all,0.00987003,"n 512, p95 4.15%, mean signed -0.34% (t = -1.5)"
+3,snoise_k15,all,all,median_abs_rel_error_B_without_low_signal,0.0091088,"n 472, p95 2.80%, mean signed -0.16% (t = -1.0)"
+3,snoise_k15,all,all,median_abs_rel_error_W_all,0.00451298,"n 64, p95 3.01%, mean signed -0.17% (t = -1.1)"
+3,snoise_k15,all,all,median_abs_rel_error_W_without_low_signal,0.00417482,"n 59, p95 1.38%, mean signed -0.05% (t = -0.5)"
+3,snoise_k15,all,all,median_abs_rel_error_W_fixedFF_all,0.00422691,"n 64, p95 2.77%, mean signed -0.15% (t = -1.1)"
+3,snoise_k15,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.00413127,"n 59, p95 1.35%, mean signed -0.05% (t = -0.5)"
+3,snoise_k2,all,all,median_abs_rel_error_B_all,0.00851253,"n 512, p95 3.63%, mean signed -0.14% (t = -0.7)"
+3,snoise_k2,all,all,median_abs_rel_error_B_without_low_signal,0.00814767,"n 472, p95 2.51%, mean signed -0.08% (t = -0.6)"
+3,snoise_k2,all,all,median_abs_rel_error_W_all,0.00525792,"n 64, p95 2.28%, mean signed -0.03% (t = -0.2)"
+3,snoise_k2,all,all,median_abs_rel_error_W_without_low_signal,0.00483318,"n 59, p95 1.52%, mean signed -0.03% (t = -0.3)"
+3,snoise_k2,all,all,median_abs_rel_error_W_fixedFF_all,0.0053067,"n 64, p95 1.93%, mean signed -0.02% (t = -0.2)"
+3,snoise_k2,all,all,median_abs_rel_error_W_fixedFF_without_low_signal,0.00470756,"n 59, p95 1.39%, mean signed -0.03% (t = -0.3)"
+4,main,1000000,low,limit_B_minus_W_pts,0.75967,"W lower than B: A 9.06%, B 7.94%, W 7.18%, W_fixedFF 7.18%"
+4,main,1000000,low,limit_A_minus_W_pts,1.87646,W lower than A
+4,main,2500000,low,limit_B_minus_W_pts,1.02887,"W lower than B: A 5.78%, B 5.49%, W 4.46%, W_fixedFF 4.52%"
+4,main,2500000,low,limit_A_minus_W_pts,1.31587,W lower than A
+4,main,5000000,low,limit_B_minus_W_pts,0.739713,"W lower than B: A 4.61%, B 3.70%, W 2.96%, W_fixedFF 2.97%"
+4,main,5000000,low,limit_A_minus_W_pts,1.65315,W lower than A
+4,main,10000000,low,limit_B_minus_W_pts,0.313365,"W lower than B: A 2.99%, B 2.77%, W 2.45%, W_fixedFF 2.51%"
+4,main,10000000,low,limit_A_minus_W_pts,0.539653,W lower than A
+4,main,1000000,realistic,limit_B_minus_W_pts,0.989031,"W lower than B: A 9.42%, B 8.32%, W 7.33%, W_fixedFF 7.34%"
+4,main,1000000,realistic,limit_A_minus_W_pts,2.09189,W lower than A
+4,main,2500000,realistic,limit_B_minus_W_pts,0.511361,"W lower than B: A 6.86%, B 5.71%, W 5.20%, W_fixedFF 5.28%"
+4,main,2500000,realistic,limit_A_minus_W_pts,1.66369,W lower than A
+4,main,5000000,realistic,limit_B_minus_W_pts,0.169409,"W lower than B: A 5.61%, B 3.86%, W 3.69%, W_fixedFF 3.74%"
+4,main,5000000,realistic,limit_A_minus_W_pts,1.91171,W lower than A
+4,main,10000000,realistic,limit_B_minus_W_pts,0.0243186,"W equal to B: A 4.60%, B 2.91%, W 2.89%, W_fixedFF 2.93%"
+4,main,10000000,realistic,limit_A_minus_W_pts,1.70562,W lower than A
+4,snoise_k15,1000000,low,limit_B_minus_W_pts,1.21406,"W lower than B: A 8.95%, B 8.38%, W 7.16%, W_fixedFF 7.17%"
+4,snoise_k15,1000000,low,limit_A_minus_W_pts,1.79052,W lower than A
+4,snoise_k15,2500000,low,limit_B_minus_W_pts,1.06772,"W lower than B: A 5.83%, B 5.62%, W 4.55%, W_fixedFF 4.64%"
+4,snoise_k15,2500000,low,limit_A_minus_W_pts,1.28097,W lower than A
+4,snoise_k15,5000000,low,limit_B_minus_W_pts,0.778076,"W lower than B: A 4.11%, B 3.77%, W 3.00%, W_fixedFF 3.06%"
+4,snoise_k15,5000000,low,limit_A_minus_W_pts,1.11727,W lower than A
+4,snoise_k15,10000000,low,limit_B_minus_W_pts,0.303352,"W lower than B: A 2.96%, B 2.84%, W 2.53%, W_fixedFF 2.58%"
+4,snoise_k15,10000000,low,limit_A_minus_W_pts,0.430067,W lower than A
+4,snoise_k15,1000000,realistic,limit_B_minus_W_pts,1.16288,"W lower than B: A 9.36%, B 8.64%, W 7.48%, W_fixedFF 7.50%"
+4,snoise_k15,1000000,realistic,limit_A_minus_W_pts,1.88137,W lower than A
+4,snoise_k15,2500000,realistic,limit_B_minus_W_pts,0.396009,"W lower than B: A 6.79%, B 5.78%, W 5.38%, W_fixedFF 5.40%"
+4,snoise_k15,2500000,realistic,limit_A_minus_W_pts,1.40273,W lower than A
+4,snoise_k15,5000000,realistic,limit_B_minus_W_pts,0.504366,"W lower than B: A 5.70%, B 4.29%, W 3.79%, W_fixedFF 3.85%"
+4,snoise_k15,5000000,realistic,limit_A_minus_W_pts,1.91276,W lower than A
+4,snoise_k15,10000000,realistic,limit_B_minus_W_pts,0.484912,"W lower than B: A 4.92%, B 3.45%, W 2.96%, W_fixedFF 3.11%"
+4,snoise_k15,10000000,realistic,limit_A_minus_W_pts,1.95497,W lower than A
+4,snoise_k2,1000000,low,limit_B_minus_W_pts,1.09956,"W lower than B: A 8.83%, B 8.38%, W 7.28%, W_fixedFF 7.30%"
+4,snoise_k2,1000000,low,limit_A_minus_W_pts,1.55227,W lower than A
+4,snoise_k2,2500000,low,limit_B_minus_W_pts,0.82951,"W lower than B: A 5.82%, B 5.66%, W 4.83%, W_fixedFF 4.86%"
+4,snoise_k2,2500000,low,limit_A_minus_W_pts,0.989681,W lower than A
+4,snoise_k2,5000000,low,limit_B_minus_W_pts,0.703911,"W lower than B: A 4.45%, B 3.84%, W 3.14%, W_fixedFF 3.22%"
+4,snoise_k2,5000000,low,limit_A_minus_W_pts,1.30926,W lower than A
+4,snoise_k2,10000000,low,limit_B_minus_W_pts,0.226075,"W lower than B: A 3.18%, B 2.89%, W 2.67%, W_fixedFF 2.70%"
+4,snoise_k2,10000000,low,limit_A_minus_W_pts,0.512508,W lower than A
+4,snoise_k2,1000000,realistic,limit_B_minus_W_pts,1.5649,"W lower than B: A 9.49%, B 9.15%, W 7.59%, W_fixedFF 7.60%"
+4,snoise_k2,1000000,realistic,limit_A_minus_W_pts,1.89765,W lower than A
+4,snoise_k2,2500000,realistic,limit_B_minus_W_pts,0.491607,"W lower than B: A 7.03%, B 5.92%, W 5.42%, W_fixedFF 5.46%"
+4,snoise_k2,2500000,realistic,limit_A_minus_W_pts,1.60601,W lower than A
+4,snoise_k2,5000000,realistic,limit_B_minus_W_pts,1.30663,"W lower than B: A 5.70%, B 5.23%, W 3.93%, W_fixedFF 3.96%"
+4,snoise_k2,5000000,realistic,limit_A_minus_W_pts,1.77444,W lower than A
+4,snoise_k2,10000000,realistic,limit_B_minus_W_pts,0.476852,"W lower than B: A 5.11%, B 3.88%, W 3.40%, W_fixedFF 3.52%"
+4,snoise_k2,10000000,realistic,limit_A_minus_W_pts,1.70533,W lower than A
+5,main,all,all,bopt_cutoff_median,155,"145 bp: 4, 150 bp: 8, 155 bp: 34, 160 bp: 18"
+5,main,all,low,bopt_cutoff_median,155,"155 bp: 20, 160 bp: 12"
+5,main,all,realistic,bopt_cutoff_median,155,"145 bp: 4, 150 bp: 8, 155 bp: 14, 160 bp: 6"
+5,snoise_k15,all,all,bopt_cutoff_median,155,"145 bp: 6, 150 bp: 13, 155 bp: 17, 160 bp: 28"
+5,snoise_k15,all,low,bopt_cutoff_median,160,"150 bp: 1, 155 bp: 14, 160 bp: 17"
+5,snoise_k15,all,realistic,bopt_cutoff_median,150,"145 bp: 6, 150 bp: 12, 155 bp: 3, 160 bp: 11"
+5,snoise_k2,all,all,bopt_cutoff_median,155,"145 bp: 17, 150 bp: 6, 155 bp: 10, 160 bp: 25, 165 bp: 6"
+5,snoise_k2,all,low,bopt_cutoff_median,160,"150 bp: 4, 155 bp: 9, 160 bp: 16, 165 bp: 3"
+5,snoise_k2,all,realistic,bopt_cutoff_median,145,"145 bp: 17, 150 bp: 2, 155 bp: 1, 160 bp: 9, 165 bp: 3"
+5b,main,all,all,n_sep_ratio_Bopt_A_below_1,0,of 64 conditions
+5b,main,all,all,max_sens_at_fpr_loss_Bopt_minus_A_pts,-0.2,FF 1% 1M low: B-opt 0.6% (cutoff 155 bp) vs A 0.8%
+5b,snoise_k15,all,all,n_sep_ratio_Bopt_A_below_1,0,of 64 conditions
+5b,snoise_k15,all,all,max_sens_at_fpr_loss_Bopt_minus_A_pts,-0.85,FF 3% 1M realistic: B-opt 6.7% (cutoff 155 bp) vs A 7.5%
+5b,snoise_k2,all,all,n_sep_ratio_Bopt_A_below_1,0,of 64 conditions
+5b,snoise_k2,all,all,max_sens_at_fpr_loss_Bopt_minus_A_pts,-1.1,FF 8% 1M realistic: B-opt 85.1% (cutoff 160 bp) vs A 86.2%
+6,main,all,all,pooled_fpr_A,0.00139375,"892/640000 = 0.139% [0.131, 0.149]; CI contains the target 0.135%"
+6,main,all,all,pooled_fpr_B,0.00148906,"953/640000 = 0.149% [0.140, 0.159]; CI above the target 0.135%"
+6,main,all,all,pooled_fpr_W,0.00140938,"902/640000 = 0.141% [0.132, 0.150]; CI contains the target 0.135%"
+6,main,all,all,pooled_fpr_W_fixedFF,0.001425,"912/640000 = 0.142% [0.134, 0.152]; CI contains the target 0.135%"
+6,main,all,all,pooled_fpr_C2,0.000167187,"107/640000 = 0.017% [0.014, 0.020]; CI below the target 0.135%"
+6,snoise_k15,all,all,pooled_fpr_A,0.00137656,"881/640000 = 0.138% [0.129, 0.147]; CI contains the target 0.135%"
+6,snoise_k15,all,all,pooled_fpr_B,0.00147813,"946/640000 = 0.148% [0.139, 0.158]; CI above the target 0.135%"
+6,snoise_k15,all,all,pooled_fpr_W,0.00146406,"937/640000 = 0.146% [0.137, 0.156]; CI above the target 0.135%"
+6,snoise_k15,all,all,pooled_fpr_W_fixedFF,0.00147031,"941/640000 = 0.147% [0.138, 0.157]; CI above the target 0.135%"
+6,snoise_k15,all,all,pooled_fpr_C2,0.000209375,"134/640000 = 0.021% [0.018, 0.025]; CI below the target 0.135%"
+6,snoise_k2,all,all,pooled_fpr_A,0.00137656,"881/640000 = 0.138% [0.129, 0.147]; CI contains the target 0.135%"
+6,snoise_k2,all,all,pooled_fpr_B,0.00143594,"919/640000 = 0.144% [0.135, 0.153]; CI contains the target 0.135%"
+6,snoise_k2,all,all,pooled_fpr_W,0.00143594,"919/640000 = 0.144% [0.135, 0.153]; CI contains the target 0.135%"
+6,snoise_k2,all,all,pooled_fpr_W_fixedFF,0.0014125,"904/640000 = 0.141% [0.132, 0.151]; CI contains the target 0.135%"
+6,snoise_k2,all,all,pooled_fpr_C2,0.000157812,"101/640000 = 0.016% [0.013, 0.019]; CI below the target 0.135%"

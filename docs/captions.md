@@ -52,6 +52,12 @@ Output: `results/figures/figS_profiles` · script: `src/evaluate/figures/figS_pr
 
 Figure S4. Gain over A under different fetal length profiles, FF 4%, realistic noise (σ = 0.35%): ratio of standardised separations sep(method)/sep(A) for B (40–156 bp), W (weights P(fetal | length) from the patients' true profile) and W_G1 (weights from the G1 profile used in the main analysis, as a lab using a published profile would; in G1 it equals W). Scenarios shift the fetal length distribution by −10 to +10 bp (fetal median 147 bp, 152 bp, 157 bp, 162 bp, 167 bp for shifts of −10, −5, +0, +5, +10 bp; maternal 172 bp) or blend it 50:50 with the maternal one (fetal median 166 bp); all groups, including the reference, are simulated from the scenario profile. Points: simulation; lines: the unified counting model (Fig. S3) with each method's weights and the scenario's true length distributions. Over all 96 conditions per scenario, the model's median |relative error| is 0.8%–1.0% for B and 0.5%–0.6% for W_G1. Dashed: method = A.
 
+## Figure S5
+
+Output: `results/figures/figS_short_noise` · script: `src/evaluate/figures/figS_short_noise.py`
+
+Figure S5. Gain over A with extra noise on short fragments, FF 4%: ratio of standardised separations sep(method)/sep(A) for B (40–156 bp) and W, at k = 1 (main analysis), 1.5 and 2. In the k scenarios each patient's chr21 fragments of 40–156 bp get a second, independent relative noise σ_s = σ·√(k² − 1), so the window's chr21 fraction has relative SD ≈ σ·k (a step at 156 bp, the worst case for B); all groups, including the reference, are simulated with it. Points: simulation; lines: the counting model with σ_u² = σ² + σ_s²·ρ_u², ρ_u the share of a method's weight inside the window (A: 0.20, B: 1, W: 0.49 at FF 4%), so σ_B/σ_A = 1.46 (k = 1.5) and 1.89 (k = 2). At realistic noise B's ratio rises from 1.16 at 1M to 1.50 at 10M without extra noise, to 1.34 at k = 1.5 and 1.21 at k = 2 (simulation); W, which takes only part of the extra noise, keeps a ratio of 1.38 at k = 2. Over the 64 conditions per scenario the model's median |relative error| is 0.85%–0.99% for B and 0.45%–0.53% for W. Dashed: method = A.
+
 ## Table 1
 
 Output: `results/tables/table1_detection_limits.csv` · script: `src/evaluate/tables.py`

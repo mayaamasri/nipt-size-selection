@@ -5,7 +5,7 @@
 #         bash scripts/download_reference.sh   (GRCh38 analysis set + Bowtie2 index, ~5 GB)
 # Run from anywhere:  bash scripts/run_all.sh
 #                     bash scripts/run_all.sh --skip-pool   (use an existing data/processed/pool as is)
-#                     bash scripts/run_all.sh --robustness  (also rerun the Task 07 fetal-profile scenarios)
+#                     bash scripts/run_all.sh --robustness  (also rerun the Task 07 and 08 robustness scenarios)
 #
 # Expected run times (measured on an Apple-silicon MacBook, macOS 26, nipt env) are noted per step;
 # total ~45 min from scratch, ~13 min when the pool already exists (measured: 793 s). Every step is deterministic (seeds
@@ -65,23 +65,38 @@ step "noise QC" python -m src.simulate.noise_qc
 # Each condition generates its patients, runs A, B, B_c, B-opt, W, W_fixedFF, C1, C2 and replaces its
 # rows in results/tables/: ~3 s per condition, ~5.5 min in all (measured 319 s). run_log.csv records the
 # git commit, time and dirty flag of each run, so it changes on every run
-grid_conditions() {
+grid_conditions() {   # grid_conditions [NAME]: "ff depth noise" per condition of the main grid or scenario NAME
+  # Noise levels come from src.config.scenario_noise_levels (short-noise scenarios skip sigma = 0)
   python -c '
-import yaml
-g = yaml.safe_load(open("config/config.yaml"))["grid"]
-for noise in g["noise_sigma"]:
-    for depth in g["depth"]:
-        for ff in g["fetal_fraction"]:
+import sys
+from src.config import load_config, scenario_noise_levels
+c = load_config(scenario=sys.argv[1] if len(sys.argv) > 1 else None)
+for noise in scenario_noise_levels(c):
+    for depth in c["grid"]["depth"]:
+        for ff in c["grid"]["fetal_fraction"]:
             print(ff, depth, noise)
-'
+' "$@"
 }
-run_grid() {   # run_grid [--scenario NAME]: every grid condition, main analysis or one scenario
+run_grid() {   # run_grid [NAME]: every grid condition, main analysis or scenario NAME
   local n=0
   while read -r ff depth noise; do
     n=$((n + 1))
     echo "    condition $n: FF $ff, depth $depth, noise $noise"
-    python -u -m src.evaluate.run_condition --ff "$ff" --depth "$depth" --noise "$noise" "$@" > /dev/null
-  done < <(grid_conditions)
+    python -u -m src.evaluate.run_condition --ff "$ff" --depth "$depth" --noise "$noise" ${1:+--scenario "$1"} > /dev/null
+  done < <(grid_conditions "$@")
+}
+run_scenario() {   # run_scenario NAME: grid and evaluation of one robustness scenario (results/robustness/NAME)
+  local sc="$1"
+  step "[$sc] full grid" run_grid "$sc"
+  step "[$sc] detection limits" python -m src.evaluate.detection_limits --scenario "$sc"
+  step "[$sc] FPR check" python -m src.evaluate.fpr_check --scenario "$sc"
+  step "[$sc] bootstrap B - A" python -u -m src.evaluate.bootstrap_diff --scenario "$sc"
+  step "[$sc] break-even check" python -m src.evaluate.breakeven_check --scenario "$sc"
+  step "[$sc] unified model check" python -m src.evaluate.unified_model_check --scenario "$sc"
+  step "[$sc] rerun check" python -m src.evaluate.check_rerun --scenario "$sc"
+}
+scenarios() {   # scenarios KIND: names in robustness.KIND (fetal_profiles or short_noise)
+  python -c 'import sys; from src.config import load_config, scenario_names; print(*scenario_names(load_config(), sys.argv[1]))' "$1"
 }
 step "full grid (96 conditions)" run_grid
 
@@ -115,21 +130,28 @@ step "robustness inputs and predictions" python -m src.evaluate.robustness_input
 # depend on each other, so they can also run in parallel (one job per scenario: ~14 min wall time for all five
 # on a 10-core Mac). Without --robustness the committed scenario tables are used as they are.
 if [ "$ROBUSTNESS" = 1 ]; then
-  for sc in $(python -c 'import yaml; print(*yaml.safe_load(open("config/config.yaml"))["robustness"]["fetal_profiles"])'); do
-    step "[$sc] full grid (96 conditions)" run_grid --scenario "$sc"
-    step "[$sc] detection limits" python -m src.evaluate.detection_limits --scenario "$sc"
-    step "[$sc] FPR check" python -m src.evaluate.fpr_check --scenario "$sc"
-    step "[$sc] bootstrap B - A" python -u -m src.evaluate.bootstrap_diff --scenario "$sc"
-    step "[$sc] break-even check" python -m src.evaluate.breakeven_check --scenario "$sc"
-    step "[$sc] unified model check" python -m src.evaluate.unified_model_check --scenario "$sc"
-    step "[$sc] rerun check" python -m src.evaluate.check_rerun --scenario "$sc"
-  done
+  for sc in $(scenarios fetal_profiles); do run_scenario "$sc"; done
 else
-  echo "==> robustness scenarios: skipped (no --robustness), using results/robustness as is"
+  echo "==> fetal-profile scenarios: skipped (no --robustness), using results/robustness as is"
 fi
 # Summary across scenarios (questions 1-7) and Fig. S4: seconds
 step "robustness summary" python -m src.evaluate.robustness_profiles
 step "Figure S4 (fetal profiles)" python -m src.evaluate.figures.figS_profiles
+
+# --- 4c. Extra noise on size-selected fragments (Task 08, decision #18) ---------------------------
+# Predictions with sigma_u, noise QC on the reference normals, and the Budis illustration (8C, 8F): ~2 s
+step "short-noise inputs, QC and Budis illustration" python -m src.evaluate.robustness_snoise_inputs
+# Optional (--robustness): grid and evaluation per short-noise scenario (k = 1.5, 2), low and realistic noise
+# only (64 conditions). Sequential time per scenario ~9 min (grid ~3.5 min, bootstrap ~5 min, the rest seconds),
+# ~18 min for both. They can also run in parallel, one job per scenario (measured: 531 s wall time for both).
+if [ "$ROBUSTNESS" = 1 ]; then
+  for sc in $(scenarios short_noise); do run_scenario "$sc"; done
+else
+  echo "==> short-noise scenarios: skipped (no --robustness), using results/robustness as is"
+fi
+# Summary across k (questions 1-6) and Fig. S5: seconds
+step "short-noise summary" python -m src.evaluate.robustness_snoise
+step "Figure S5 (short-fragment noise)" python -m src.evaluate.figures.figS_short_noise
 # All figure and table captions, from the scripts' caption functions, to docs/captions.md: seconds
 step "captions" python -m src.evaluate.captions
 

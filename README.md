@@ -41,7 +41,7 @@ src/evaluate/          one condition end to end, detection limits, bootstrap, br
 src/evaluate/figures/  one script per manuscript figure
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
-results/robustness/    per-scenario tables of the fetal-profile robustness analysis (Task 07)
+results/robustness/    per-scenario tables of the robustness analyses (Task 07 fetal profiles, Task 08 short-fragment noise)
 manuscript/            manuscript source
 ```
 
@@ -122,6 +122,16 @@ scenario condition can be checked like a main one:
 python -m src.evaluate.check_rerun --scenario shift_p10 --ff 0.04 --depth 10000000 --noise realistic
 ```
 
+### Extra noise on size-selected fragments (`--scenario snoise_k15`, `snoise_k2`)
+
+`robustness.short_noise` defines two more scenarios (decision #18): besides the per-patient noise on the whole
+chr21 row, the chr21 fragments of 40–156 bp get a second, independent noise σ_s = σ·√(k² − 1), so the window's
+chr21 fraction is about k times noisier (k = 1.5 and 2). They use the same `--scenario` flag and output folders,
+the G1 fetal profile, and only the low and realistic noise levels (64 conditions; `none` is skipped through
+`src.config.scenario_noise_levels`, never by editing the grid, because patient seeds use the level's index).
+`bash scripts/run_all.sh --robustness` also reruns them: sequential time ~9 min per scenario (~18 min for both);
+they can also run in parallel, one job per scenario.
+
 ## Where each figure and table comes from
 
 | Output (`results/`) | Script | Content |
@@ -133,6 +143,7 @@ python -m src.evaluate.check_rerun --scenario shift_p10 --ff 0.04 --depth 100000
 | `figures/fig5_methods`, `figS_methods_none`, `figS_methods_low` | `src/evaluate/figures/fig5_methods.py` | sensitivity at FPR 0.135% by method, realistic / no / low noise |
 | `figures/figS_unified_model` | `src/evaluate/figures/figS_unified_model.py` | unified counting model vs simulation for B and W at FF 4% (from `tables/unified_model_check.csv`) |
 | `figures/figS_profiles` | `src/evaluate/figures/figS_profiles.py` | B, W and W_G1 vs A under each fetal-profile scenario, FF 4%, realistic noise: model vs simulation |
+| `figures/figS_short_noise` | `src/evaluate/figures/figS_short_noise.py` | B and W vs A with extra noise on short fragments (k = 1, 1.5, 2), FF 4%: model vs simulation |
 | `figures/qc_*` | `src/simulate/lengths.py`, `mappability.py`, `noise_qc.py` | QC plots |
 | `tables/results_all.csv` and per-condition tables | `src/evaluate/run_condition.py` | all metrics per condition × method |
 | `tables/detection_limits.csv` | `src/evaluate/detection_limits.py` | detection limits for all 14 methods |
@@ -142,6 +153,8 @@ python -m src.evaluate.check_rerun --scenario shift_p10 --ff 0.04 --depth 100000
 | `tables/unified_model_check.csv`, `unified_model_summary.csv` | `src/evaluate/unified_model_check.py` | unified counting model (any length weighting) vs observed ratios for B, B_c, W, W_fixedFF; W vs the optimal weights (analytic) |
 | `tables/robustness_profiles_inputs.csv`, `robustness_profiles_pred.csv` | `src/evaluate/robustness_inputs.py` | per fetal-profile scenario: median lengths, g, r of the 40–156 bp window; model predictions for B, W, W_G1, W_fixedFF (before any simulation) |
 | `tables/robustness_profiles_summary.csv` | `src/evaluate/robustness_profiles.py` | robustness questions 1–7 across scenarios (B vs A, depth effect, model error, cost of a wrong profile, ranking, FPR, B-opt cutoffs) |
+| `tables/robustness_snoise_pred.csv`, `robustness_snoise_qc.csv`, `snoise_budis_illustration.csv` | `src/evaluate/robustness_snoise_inputs.py` | short-fragment noise: model predictions with σ_u (before any simulation), noise QC on the reference normals, and the k that would match Budiš et al. (illustration, model only) |
+| `tables/robustness_snoise_summary.csv` | `src/evaluate/robustness_snoise.py` | short-fragment noise questions 1–6 across k (B vs A, depth effect, model error, W vs B vs A, B-opt, FPR) |
 | `robustness/<NAME>/tables/*` | the scripts above with `--scenario NAME` | the main-grid tables (results_all, detection limits, FPR, bootstrap, break-even, unified model) for one scenario |
 | `tables/breakeven_ratio_noise.csv` | `src/evaluate/bootstrap_ratio.py` | bootstrap SD of the observed ratio (Fig. 4 caption) |
 | `tables/table1_detection_limits.csv` | `src/evaluate/tables.py` | Table 1 |

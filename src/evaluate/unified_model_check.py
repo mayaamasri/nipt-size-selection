@@ -222,7 +222,7 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
     for ff, depth, noise, sigma, p0 in conditions:
         t = model_terms(np.ones_like(p_f), p_f, p_m, ff, p0, depth, sigma, shorts[noise])
         worst = max(worst, *(abs(t[k] - 1) for k in ("ratio_pred", "g_eff", "r_eff")))
-    check("1 (u = 1: ratio_pred, g_eff, r_eff = 1, 96 conditions)", worst, 1e-12)
+    check(f"1 (u = 1: ratio_pred, g_eff, r_eff = 1, {len(conditions)} conditions)", worst, 1e-12)
 
     # 2. windows reproduce breakeven_check.csv (g, r and Eq. 4's ratio_pred): tests 6A == Eq. 4 with g_eff, r_eff
     worst = 0.0
@@ -261,7 +261,7 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
         eff = (model_terms(w, p_f, p_m, ff, p0, depth, 0.0)["ratio_pred"]
                / model_terms(u_opt, p_f, p_m, ff, p0, depth, 0.0)["ratio_pred"])
         worst = max(worst, np.abs(u_opt - w).max(), abs(eff - 1))
-    check("5 (sigma = 0: u_opt = w*, w_efficiency = 1, 96 conditions)", worst, 1e-9)
+    check(f"5 (sigma = 0: u_opt = w*, w_efficiency = 1, {len(conditions)} conditions)", worst, 1e-9)
 
     # 5b. sigma > 0: the closed form equals the brute-force optimum, and no random change of u_opt beats it.
     # sep_u^2 = (u'Dw)^2 / (4 u'Mu), D = diag(p_mix), M = D / (p0 N) + sigma^2 p_mix p_mix'; maximised by
