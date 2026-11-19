@@ -15,6 +15,14 @@ the patient stream, one patient at a time. sigma = 0 draws no eps, so those pati
 generator without noise. A grid noise level's sigma is grid.noise_sigma_values at the level's position in
 grid.noise_sigma.
 
+Short-fragment noise (Task 08, decision #18; only in a short-noise scenario, src.config): after eps, each
+patient draws a second, independent eps_s ~ Normal(0, sigma_s), sigma_s = sigma * sqrt(k^2 - 1), and the chr21
+cells inside window_bp are multiplied by (1 + eps_s) as well:
+    P21(l) <- P21(l) (1 + eps) (1 + eps_s 1[window]),  then renormalise and draw counts.
+eps then eps_s come from the patient stream. Without short noise no eps_s is drawn, so those patients are
+byte-identical to before; with it the stream shifts after each patient's eps, so a short-noise scenario shares
+only its seeds (not its patients) with the main grid: partial pairing.
+
 Seeds (all from config seed):
   grid patients  SeedSequence(seed, spawn_key=(1, i_ff, i_depth, i_noise, i_group)), indices = positions
                  in the config grid lists and in GROUPS, so a condition gives the same patients
@@ -33,7 +41,7 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from src.config import load_config, repo_path
+from src.config import load_config, repo_path, short_noise
 from src.simulate.lengths import load_length_distributions
 from src.simulate.mappability import load_mappability
 
@@ -81,19 +89,26 @@ def mixture(ff, trisomy, matrices):
     return ff * fetal + (1 - ff) * matrices["maternal"]
 
 
-def generate_patients(ff, depth, n_patients, trisomy, sigma=0.0, *, rng, matrices=None):
+def generate_patients(ff, depth, n_patients, trisomy, sigma=0.0, *, rng, matrices=None, short_sigma=0.0,
+                      short_window=None):
     """Counts of surviving fragments, array (n_patients, 2, 465): [:, 0] chr21, [:, 1] other autosomes.
 
     sigma: relative SD of the noise on the chr21 row (decision #7). sigma = 0 draws no eps at all, so the
     patients are byte-identical to the generator without noise.
     matrices: from origin_matrices(config). If None, matrices built from config/config.yaml are used.
+    short_sigma, short_window: short-fragment noise (Task 08): relative SD of eps_s and a boolean mask over the
+    length columns. short_sigma = 0 draws no eps_s (the generator is then exactly as before).
     """
     p = mixture(ff, trisomy, _cached_matrices() if matrices is None else matrices)
+    if short_sigma > 0 and sigma == 0:
+        raise ValueError("short-fragment noise needs sigma > 0 (sigma_s = sigma sqrt(k^2 - 1))")
     if sigma == 0:
         counts = rng.multinomial(depth, p.ravel(), size=n_patients)
         return counts.reshape(n_patients, *p.shape)
-    if sigma < 0:
-        raise ValueError(f"sigma must be >= 0, got {sigma!r}")
+    if sigma < 0 or short_sigma < 0:
+        raise ValueError(f"sigma and short_sigma must be >= 0, got {sigma!r}, {short_sigma!r}")
+    if short_sigma > 0 and short_window is None:
+        raise ValueError("short_sigma > 0 needs short_window")
     # Per patient: eps, then its counts, from the same stream (so batches give the same patients as one call)
     counts = np.empty((n_patients, p.size), dtype=np.int64)
     for i in range(n_patients):
@@ -102,6 +117,11 @@ def generate_patients(ff, depth, n_patients, trisomy, sigma=0.0, *, rng, matrice
             raise ValueError(f"patient {i}: eps = {eps!r} makes the chr21 row non-positive")
         p_i = p.copy()
         p_i[CHR21] *= 1 + eps
+        if short_sigma > 0:
+            eps_s = rng.normal(0.0, short_sigma)
+            if eps_s <= -1:
+                raise ValueError(f"patient {i}: eps_s = {eps_s!r} makes the chr21 window cells non-positive")
+            p_i[CHR21, short_window] *= 1 + eps_s
         counts[i] = rng.multinomial(depth, (p_i / p_i.sum()).ravel())
     return counts.reshape(n_patients, *p.shape)
 
@@ -160,16 +180,31 @@ def noise_sigma(config, noise):
     return float(values[_grid_index(grid["noise_sigma"], noise, "noise_sigma")])
 
 
+def short_noise_params(config, noise, lengths):
+    """(sigma_s, window mask over lengths) of a short-noise scenario at this noise level; (0.0, None) otherwise.
+    sigma_s = sigma * sqrt(k^2 - 1), so the window's chr21 fraction has relative SD ~ sigma * k (decision #18)."""
+    settings = short_noise(config)
+    if settings is None:
+        return 0.0, None
+    sigma = noise_sigma(config, noise)
+    if sigma == 0:
+        raise ValueError(f"short-noise scenario {settings['name']!r} has no sigma = 0 level (noise {noise!r})")
+    lo, hi = settings["window_bp"]
+    return sigma * math.sqrt(settings["k"] ** 2 - 1), (lengths >= lo) & (lengths <= hi)
+
+
 def generate_group(config, ff, depth, noise, group, matrices=None):
     """All patients of one group of one grid condition (size from patients_per_condition).
 
     matrices: from origin_matrices(config); built from the given config if None (pass them in when
-    generating many groups, to build them once).
+    generating many groups, to build them once). In a short-noise scenario the extra window noise is added.
     """
+    matrices = origin_matrices(config) if matrices is None else matrices
     rng = np.random.default_rng(patient_seed(config, ff, depth, noise, group))
+    short_sigma, short_window = short_noise_params(config, noise, matrices["lengths"])
     return generate_patients(ff, depth, config["patients_per_condition"][group], group.endswith("t21"),
-                             noise_sigma(config, noise), rng=rng,
-                             matrices=origin_matrices(config) if matrices is None else matrices)
+                             noise_sigma(config, noise), rng=rng, matrices=matrices, short_sigma=short_sigma,
+                             short_window=short_window)
 
 
 def qc_rng(config, run):

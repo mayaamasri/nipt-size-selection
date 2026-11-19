@@ -24,7 +24,7 @@ Run from the repo root to print the reference for the milestone condition (FF 4%
 
 import numpy as np
 
-from src.config import base_config, load_config, scenario_name
+from src.config import base_config, fetal_profile_name, load_config
 from src.simulate.patients import CHR21, OTHER, generate_group, origin_matrices
 
 
@@ -51,16 +51,16 @@ def posterior_weights(ff, matrices):
 
 def g1_matrices(config, matrices):
     """Matrices of the G1 profile: matrices itself in the main analysis, else built from base_config(config)."""
-    return matrices if scenario_name(config) is None else origin_matrices(base_config(config))
+    return matrices if fetal_profile_name(config) is None else origin_matrices(base_config(config))
 
 
 def statistics(X, ff, config, matrices, matrices_g1=None):
     """Raw per-patient statistics: dict name -> array of length n. In a scenario, matrices_g1 (from
     g1_matrices) is required, so G1 weights never fall back to the scenario profile."""
-    scenario = scenario_name(config) is not None
+    scenario = fetal_profile_name(config) is not None
     if matrices_g1 is None:
         if scenario:
-            raise ValueError(f"scenario {scenario_name(config)!r}: pass matrices_g1 (the G1 weights' matrices)")
+            raise ValueError(f"scenario {fetal_profile_name(config)!r}: pass matrices_g1 (the G1 weights' matrices)")
         matrices_g1 = matrices
     lengths = matrices["lengths"]
     chr21, other = X[:, CHR21].astype(float), X[:, OTHER].astype(float)

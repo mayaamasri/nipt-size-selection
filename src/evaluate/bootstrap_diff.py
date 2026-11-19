@@ -27,7 +27,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.config import add_scenario_argument, load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path, scenario_noise_levels
 from src.evaluate.metrics import sens_at_fpr
 from src.methods.reference import build_reference, g1_matrices, statistics, zscores
 from src.methods.zscore import window_name
@@ -79,7 +79,7 @@ def main():
     grid = config["grid"]
 
     rows, start = [], time.time()
-    for noise in grid["noise_sigma"]:
+    for noise in scenario_noise_levels(config):   # short-noise scenarios have no sigma = 0 level
         for depth in grid["depth"]:
             for ff in grid["fetal_fraction"]:
                 y, scores = condition_scores(config, ff, depth, noise, matrices)

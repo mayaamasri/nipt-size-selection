@@ -31,12 +31,21 @@ true profile), while W_G1 and W_fixedFF keep the G1 weights as u; W_G1 rows and 
 everything is read from and written to results/robustness/NAME/tables. In the main analysis the G1 and patient
 profiles are the same, W_G1 is absent and the outputs are unchanged.
 
+Short-fragment noise (Task 08, decision #18, short-noise scenarios): the chr21 cells of the 40-156 bp window get
+an extra relative noise sigma_s, so for weights u the depth-independent term becomes
+  sigma_u^2 = sigma^2 + sigma_s^2 rho_u^2,   rho_u = E[u 1_win] / E[u]
+for every method, A included (rho_A = r of the window, rho = 1 for B and every B_c inside it, < 1 for B_165).
+The optimum then has two noise terms and no closed form here: u_opt is solved numerically (M u = D w*, as in
+self-test 5b, with M = D / (p0 N) + sigma^2 p_mix p_mix' + sigma_s^2 (p_mix 1_win)(p_mix 1_win)'). Without
+short noise (sigma_s = 0) every number is exactly Task 06's (self-tests 6, 7).
+
 No simulation: only results_all.csv and origin_matrices. Writes results/tables/unified_model_check.csv and
 unified_model_summary.csv (breakeven_check's summary per method family: B = B and every B_c, W, W_fixedFF).
 breakeven_check.csv is only read (self-test 2). The self-test runs first, every time. Run from the repo root
 (seconds):
     python -m src.evaluate.unified_model_check
     python -m src.evaluate.unified_model_check --scenario shift_p10   (Task 07: results/robustness/shift_p10)
+    python -m src.evaluate.unified_model_check --scenario snoise_k2   (Task 08)
 """
 
 import argparse
@@ -47,7 +56,7 @@ import pandas as pd
 from src.config import add_scenario_argument, load_config, repo_path
 from src.evaluate.breakeven_check import CONDITION, fixed_cutoff_methods, predicted_ratio, summarise
 from src.methods.reference import g1_matrices, posterior_weights
-from src.simulate.patients import origin_matrices
+from src.simulate.patients import origin_matrices, short_noise_params
 
 COLUMNS = CONDITION + ["sigma", "method", "p0", "g_eff", "r_eff", "sep_A", "sep_obs", "ratio_obs", "ratio_pred",
                        "rel_error", "abs_error", "low_signal", "ratio_pred_opt", "w_efficiency"]
@@ -68,28 +77,67 @@ def mixture_terms(ff, p_f, p_m):
     return p_mix, ff * p_f / p_mix
 
 
-def separation(u, p_f, p_m, ff, p0, depth, sigma):
+def window_share(u, p_mix, window):
+    """rho_u = E[u 1_win] / E[u]: the share of a method's weight that falls in the short-noise window."""
+    return (p_mix @ (u * window)) / (p_mix @ u)
+
+
+def noise_variance(u, p_mix, sigma, short):
+    """Depth-independent relative variance of F_u: sigma^2, plus sigma_s^2 rho_u^2 with short noise.
+    short: None (no short noise: exactly Task 06's sigma^2) or (sigma_s, window as a 0/1 float array)."""
+    if short is None:
+        return sigma ** 2
+    sigma_s, window = short
+    return sigma ** 2 + (sigma_s * window_share(u, p_mix, window)) ** 2
+
+
+def separation(u, p_f, p_m, ff, p0, depth, sigma, short=None):
     """sep_u from the 6A formula. p_f, p_m are the TRUE length distributions of the patients (for a mismatch
-    run, pass the changed profile here and the mismatched weights as u)."""
+    run, pass the changed profile here and the mismatched weights as u). short: see noise_variance."""
     p_mix, w = mixture_terms(ff, p_f, p_m)
     e_u, e_uw, e_uu = p_mix @ u, p_mix @ (u * w), p_mix @ (u * u)
-    return (e_uw / (2 * e_u)) / np.sqrt(e_uu / (p0 * depth * e_u ** 2) + sigma ** 2)
+    return (e_uw / (2 * e_u)) / np.sqrt(e_uu / (p0 * depth * e_u ** 2) + noise_variance(u, p_mix, sigma, short))
 
 
-def model_terms(u, p_f, p_m, ff, p0, depth, sigma):
-    """g_eff, r_eff and ratio_pred = sep_u / sep_A for weights u (array over lengths)."""
+def model_terms(u, p_f, p_m, ff, p0, depth, sigma, short=None):
+    """g_eff, r_eff, ratio_pred = sep_u / sep_A, and sigma_u (relative depth-independent SD) for weights u."""
     u = np.asarray(u, float)
     p_mix, w = mixture_terms(ff, p_f, p_m)
     e_u = p_mix @ u
-    ratio = (separation(u, p_f, p_m, ff, p0, depth, sigma)
-             / separation(np.ones_like(u), p_f, p_m, ff, p0, depth, sigma))
-    return {"g_eff": (p_mix @ (u * w)) / (ff * e_u), "r_eff": e_u ** 2 / (p_mix @ (u * u)), "ratio_pred": ratio}
+    ratio = (separation(u, p_f, p_m, ff, p0, depth, sigma, short)
+             / separation(np.ones_like(u), p_f, p_m, ff, p0, depth, sigma, short))
+    return {"g_eff": (p_mix @ (u * w)) / (ff * e_u), "r_eff": e_u ** 2 / (p_mix @ (u * u)), "ratio_pred": ratio,
+            "sigma_u": float(np.sqrt(noise_variance(u, p_mix, sigma, short)))}
+
+
+def model_short_noise(config, noise, lengths):
+    """The model's short argument for one noise level: None without short noise, else (sigma_s, 0/1 window)."""
+    sigma_s, window = short_noise_params(config, noise, lengths)
+    return None if window is None else (sigma_s, window.astype(float))
 
 
 def optimal_weights(w, ff, p0, depth, sigma):
     """u_opt = w* - FF k / (1 + k), k = sigma^2 p0 N: the best linear weights (analytic only, 6C)."""
     k = sigma ** 2 * p0 * depth
     return w - ff * k / (1 + k)
+
+
+def solved_optimal_weights(p_f, p_m, ff, p0, depth, sigma, short=None):
+    """Best linear weights by solving M u = D w* (any noise terms; up to scale). sep_u^2 = (u'Dw*)^2 / (4 u'Mu),
+    D = diag(p_mix), M = D / (p0 N) + sigma^2 p_mix p_mix' [+ sigma_s^2 (p_mix 1_win)(p_mix 1_win)']."""
+    p_mix, w = mixture_terms(ff, p_f, p_m)
+    M = np.diag(p_mix) / (p0 * depth) + sigma ** 2 * np.outer(p_mix, p_mix)
+    if short is not None:
+        v = p_mix * short[1]
+        M = M + short[0] ** 2 * np.outer(v, v)
+    return np.linalg.solve(M, p_mix * w)
+
+
+def best_weights(p_f, p_m, ff, p0, depth, sigma, short=None):
+    """u_opt: the closed form (6C) without short noise, the numerical solve with it."""
+    if short is None:
+        return optimal_weights(mixture_terms(ff, p_f, p_m)[1], ff, p0, depth, sigma)
+    return solved_optimal_weights(p_f, p_m, ff, p0, depth, sigma, short)
 
 
 def method_weights(config, matrices, ff, matrices_g1=None):
@@ -117,17 +165,18 @@ def unified_table(results, config, matrices, matrices_g1=None):
     rows = []
     for (ff, depth, noise), cond in sep[sep["method"].isin(methods)].groupby(CONDITION, sort=False):
         sigma, p0 = float(cond["sigma"].iloc[0]), float(cond["p0"].iloc[0])
+        short = model_short_noise(config, noise, matrices["lengths"])
         weights = method_weights(config, matrices, ff, matrices_g1)
         s_a = sep_a.loc[(ff, depth, noise)]
         for r in cond.itertuples():
-            terms = model_terms(weights[r.method], p_f, p_m, ff, p0, depth, sigma)
+            terms = model_terms(weights[r.method], p_f, p_m, ff, p0, depth, sigma, short)
             row = {"ff": ff, "depth": depth, "noise": noise, "sigma": sigma, "method": r.method, "p0": p0,
                    "g_eff": terms["g_eff"], "r_eff": terms["r_eff"], "sep_A": s_a, "sep_obs": r.sep,
                    "ratio_obs": r.sep / s_a, "ratio_pred": terms["ratio_pred"],
                    "ratio_pred_opt": np.nan, "w_efficiency": np.nan}
             if r.method in ("W", "W_G1"):   # W_G1: scenarios only; u_opt is always the patients' profile's
-                u_opt = optimal_weights(weights["W"], ff, p0, depth, sigma)
-                row["ratio_pred_opt"] = model_terms(u_opt, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
+                u_opt = best_weights(p_f, p_m, ff, p0, depth, sigma, short)
+                row["ratio_pred_opt"] = model_terms(u_opt, p_f, p_m, ff, p0, depth, sigma, short)["ratio_pred"]
                 row["w_efficiency"] = row["ratio_pred"] / row["ratio_pred_opt"]
             rows.append(row)
     table = pd.DataFrame(rows)
@@ -159,6 +208,8 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
     p_f, p_m = length_distributions(matrices)
     conditions = results[results["method"] == "A"][CONDITION + ["sigma", "p0"]].itertuples(index=False)
     conditions = [(float(c.ff), int(c.depth), c.noise, float(c.sigma), float(c.p0)) for c in conditions]
+    lengths = matrices["lengths"]
+    shorts = {n: model_short_noise(config, n, lengths) for n in {c[2] for c in conditions}}
 
     def check(name, worst, tol):
         ok = worst < tol
@@ -168,8 +219,8 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
 
     # 1. u = 1 -> ratio_pred = g_eff = r_eff = 1
     worst = 0.0
-    for ff, depth, _, sigma, p0 in conditions:
-        t = model_terms(np.ones_like(p_f), p_f, p_m, ff, p0, depth, sigma)
+    for ff, depth, noise, sigma, p0 in conditions:
+        t = model_terms(np.ones_like(p_f), p_f, p_m, ff, p0, depth, sigma, shorts[noise])
         worst = max(worst, *(abs(t[k] - 1) for k in ("ratio_pred", "g_eff", "r_eff")))
     check("1 (u = 1: ratio_pred, g_eff, r_eff = 1, 96 conditions)", worst, 1e-12)
 
@@ -181,17 +232,17 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
             if method in WEIGHTED:
                 continue
             ref = keyed.loc[(ff, depth, noise, method)]
-            t = model_terms(u, p_f, p_m, ff, p0, depth, sigma)
+            t = model_terms(u, p_f, p_m, ff, p0, depth, sigma, shorts[noise])
             worst = max(worst, *(abs(t[a] / ref[b] - 1) for a, b in
                                  (("g_eff", "g"), ("r_eff", "r"), ("ratio_pred", "ratio_pred"))))
     check(f"2 (B and B_c vs breakeven_check.csv: g, r, ratio_pred, {len(breakeven)} rows)", worst, 1e-9)
 
     # 3. scaling the weights by 7 does not change ratio_pred
     worst = 0.0
-    for ff, depth, _, sigma, p0 in conditions:
+    for ff, depth, noise, sigma, p0 in conditions:
         for u in method_weights(config, matrices, ff, matrices_g1).values():
-            a = model_terms(u, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
-            b = model_terms(7 * u, p_f, p_m, ff, p0, depth, sigma)["ratio_pred"]
+            a = model_terms(u, p_f, p_m, ff, p0, depth, sigma, shorts[noise])["ratio_pred"]
+            b = model_terms(7 * u, p_f, p_m, ff, p0, depth, sigma, shorts[noise])["ratio_pred"]
             worst = max(worst, abs(b / a - 1))
     check("3 (u -> 7u leaves ratio_pred unchanged, all methods)", worst, 1e-12)
 
@@ -240,6 +291,41 @@ def self_test(config, matrices, results, breakeven, matrices_g1=None):
           f"{'ok' if worst_gain <= 1e-12 else 'FAIL'}")
     if worst_gain > 1e-12:
         raise ValueError(f"self-test 5b failed: a random change of u_opt raised ratio_pred by {worst_gain!r}")
+
+    # 6. short noise with sigma_s = 0 gives exactly Task 06's numbers (bit for bit), every method and condition
+    lo, hi = config["methods"]["size_selection_window_bp"]
+    window = ((lengths >= lo) & (lengths <= hi)).astype(float)
+    worst = 0.0
+    for ff, depth, _, sigma, p0 in conditions:
+        for u in method_weights(config, matrices, ff, matrices_g1).values():
+            a = model_terms(u, p_f, p_m, ff, p0, depth, sigma)
+            b = model_terms(u, p_f, p_m, ff, p0, depth, sigma, (0.0, window))
+            worst = max(worst, *(float(a[k] != b[k]) for k in a))
+    check("6 (sigma_s = 0 == no short noise, exact equality, all methods)", worst, 0.5)
+
+    # 7. the numerical optimum equals the closed form when sigma_s = 0 (after scaling)
+    worst = 0.0
+    for ff, depth, _, sigma, p0 in conditions:
+        if sigma == 0:
+            continue
+        closed = best_weights(p_f, p_m, ff, p0, depth, sigma)
+        solved = solved_optimal_weights(p_f, p_m, ff, p0, depth, sigma, (0.0, window))
+        scale = (solved @ closed) / (closed @ closed)
+        worst = max(worst, np.abs(solved / scale - closed).max() / np.abs(closed).max())
+    check("7 (numerical u_opt with sigma_s = 0 == closed form)", worst, 1e-9)
+
+    # 8. rho_u: A -> r of the short-noise window, windows inside it -> 1, B_165 -> r_window / r_165
+    worst = 0.0
+    for ff in config["grid"]["fetal_fraction"]:
+        p_mix, _ = mixture_terms(ff, p_f, p_m)
+        r_win = p_mix @ window
+        for method, u in method_weights(config, matrices, ff, matrices_g1).items():
+            if method in WEIGHTED:
+                continue
+            expected = min(r_win, p_mix @ u) / (p_mix @ u)
+            worst = max(worst, abs(window_share(u, p_mix, window) / expected - 1))
+        worst = max(worst, abs(window_share(np.ones_like(p_f), p_mix, window) / r_win - 1))
+    check("8 (rho_u of A, B and every B_c, every FF)", worst, 1e-12)
 
 
 def main():

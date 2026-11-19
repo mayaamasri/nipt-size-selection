@@ -61,7 +61,7 @@ POOLED = "scenarios"       # profile label of rows pooled over the five scenario
 def profiles(config):
     """{profile: its tables directory}, G1 first, then the scenarios in config order."""
     out = {MAIN: repo_path(config["paths"]["results"]) / "tables"}
-    for name in scenario_names(config):
+    for name in scenario_names(config, "fetal_profiles"):
         out[name] = repo_path(load_config(scenario=name)["paths"]["results"]) / "tables"
     return out
 
@@ -137,11 +137,11 @@ def q2(name, d, pred, grid):
     return rows
 
 
-def q3(name, d):
+def q3(name, d, families=FAMILIES):
     s = d["unified_model_summary"]
     s = s[s["group"] == "overall"]
     rows = []
-    for fam in FAMILIES:
+    for fam in families:
         for subset in ("all", "without_low_signal"):
             r = s[(s["family"] == fam) & (s["rows"] == subset)].iloc[0]
             rows.append({"question": "3", "profile": name, "depth": "all", "noise": "all",

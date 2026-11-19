@@ -19,7 +19,9 @@ Prints the milestone sanity checks (brief 3F) at the end.
 --scenario NAME (Task 07, decision #17) runs the condition with the fetal-profile scenario NAME
 (src.config.load_config): every group, including the reference, is generated from the scenario profile, the
 method W_G1 (weights from the G1 profile) is added after W, W_fixedFF and C2's z_weighted use the G1 weights,
-and the tables go to results/robustness/NAME/tables. The patient seeds are the same spawn keys as the main
+and the tables go to results/robustness/NAME/tables. A short-noise scenario (Task 08, decision #18) adds extra
+noise on the chr21 cells of the 40-156 bp window (src.simulate.patients) and runs only the noise levels with
+sigma > 0 (src.config.scenario_noise_levels). The patient seeds are the same spawn keys as the main
 grid (no scenario index), so a scenario's patients share their random streams with the main grid's; since the
 multinomial probabilities differ, this pairs the scenarios only partially, not patient by patient.
 
@@ -36,7 +38,8 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
-from src.config import REPO_ROOT, add_scenario_argument, load_config, repo_path, scenario_name
+from src.config import (REPO_ROOT, add_scenario_argument, fetal_profile_name, load_config, repo_path,
+                        scenario_name, scenario_noise_levels)
 from src.evaluate.metrics import evaluate, g_and_r
 from src.methods.features import TREE_FEATURES
 from src.methods.reference import build_reference, g1_matrices, statistics, zscores
@@ -59,8 +62,8 @@ SORT = {
 
 
 def method_order(config):
-    """Every method, in the order of the results tables (W_G1 only in a robustness scenario)."""
-    w_g1 = [] if scenario_name(config) is None else ["W_G1"]
+    """Every method, in the order of the results tables (W_G1 only in a fetal-profile scenario)."""
+    w_g1 = [] if fetal_profile_name(config) is None else ["W_G1"]
     return ["A", "B", *fixed_cutoff_methods(config), "B-opt", "W", *w_g1, "W_fixedFF", *TREE_FEATURES]
 
 
@@ -84,6 +87,9 @@ def git_state():
 
 def run_condition(config, ff, depth, noise):
     """All tables of one condition as DataFrames, plus the test normals' zA for the sanity checks."""
+    if str(noise) not in [str(n) for n in scenario_noise_levels(config)]:
+        raise ValueError(f"noise level {noise!r} is not run in scenario {scenario_name(config)!r} "
+                         f"(levels: {scenario_noise_levels(config)})")
     matrices = origin_matrices(config)
     matrices_g1 = g1_matrices(config, matrices)   # the same object in the main analysis
     target = config["methods"]["target_fpr"]

@@ -63,3 +63,6 @@ robustness:
     shift_p5:  {shift_bp: 5,   blend_maternal: 0.0}
     shift_p10: {shift_bp: 10,  blend_maternal: 0.0}
     blend50:   {shift_bp: 0,   blend_maternal: 0.5}
+  short_noise:                 # decision #18; extra noise on the chr21 cells of window_bp, sigma_s = sigma sqrt(k^2 - 1)
+    snoise_k15: {window_bp: [40, 156], k: 1.5}
+    snoise_k2:  {window_bp: [40, 156], k: 2.0}

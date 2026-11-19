@@ -37,7 +37,7 @@ PREVIEW = {"ff": 0.04, "noise": "realistic", "depths": (1_000_000, 10_000_000)}
 
 def profile_configs(config):
     """{profile: config}: G1 (the main config) first, then every scenario in config order."""
-    return {MAIN: config, **{name: load_config(scenario=name) for name in scenario_names(config)}}
+    return {MAIN: config, **{name: load_config(scenario=name) for name in scenario_names(config, "fetal_profiles")}}
 
 
 def inputs_table(configs):
@@ -158,7 +158,7 @@ def main():
     print(f"\n7C ratio_pred vs A, FF {PREVIEW['ff']:.0%}, {PREVIEW['noise']} noise:")
     print(f"{'profile':>10} {'g*sqrt(r)':>9} " + " ".join(f"{f'{d / 1e6:g}M: W / W_G1 / B':>22}"
                                                        for d in PREVIEW["depths"]))
-    order = [MAIN] + scenario_names(config)
+    order = [MAIN] + scenario_names(config, "fetal_profiles")
     for name in sorted(order, key=lambda n: (configs[n].get("fetal_profile", {}).get("blend_maternal", 0),
                                              configs[n].get("fetal_profile", {}).get("shift_bp", 0))):
         gsr = inputs.set_index("profile").loc[name, "g_sqrt_r_ff4"]

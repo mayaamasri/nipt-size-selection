@@ -16,6 +16,8 @@ with skewness (1 - 2 p0) / sqrt(n p0 (1 - p0)). The noise term (relative SD sigm
 variance but no skew, so skew = binomial skew * (var_binomial / var_total)^(3/2). First-order
 Cornish-Fisher: P(z > t) ~ Phi_bar(t) + phi(t) * skew * (t^2 - 1) / 6. r = 1 for A; the reference's own
 estimation error is ignored (it adds ~0.002 percentage points on average).
+In short-noise scenarios (Task 08) the noise term uses each method's own sigma_u (A: rho = r of the
+window; B_c: rho_c), as in breakeven_check.
 
 Reads results/tables/results_all.csv, writes results/tables/fpr_check.csv. Run from the repo root:
     python -m src.evaluate.fpr_check
@@ -28,9 +30,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from src.config import add_scenario_argument, load_config, repo_path
+from src.config import add_scenario_argument, load_config, repo_path, short_noise
 from src.evaluate.run_condition import method_order
 from src.simulate.mappability import wilson_interval
+from src.simulate.patients import origin_matrices, short_noise_params, window_stats
 
 Z_METHODS_EXCLUDED = ("C1", "C2")  # trees: threshold set on calibration normals, not z > z_threshold
 LEVELS = {"method": [], "method_depth": ["depth"], "method_noise": ["noise"], "method_depth_noise": ["depth", "noise"]}
@@ -38,14 +41,37 @@ COLUMNS = ["level", "method", "depth", "noise", "n_conditions", "n_normals", "fa
            "fpr_hi", "expected_fpr_skew", "n_above_target", "n_ci_above_target", "n_ci_below_target"]
 
 
-def skew_expected_fpr(results, threshold):
-    """Per row: first-order Cornish-Fisher P(z > threshold) for a normal; NaN for the weighted methods."""
+def skew_expected_fpr(results, threshold, sigma=None):
+    """Per row: first-order Cornish-Fisher P(z > threshold) for a normal; NaN for the weighted methods.
+    sigma: per-row depth-independent noise (default: the sigma column; short_noise_sigma in Task 08 scenarios)."""
     r = np.where(results["method"] == "A", 1.0, results["r"])  # NaN for W, W_fixedFF
     p0, n = results["p0"], results["depth"] * r
     var_bin = p0 * (1 - p0) / n
-    var_noise = (p0 * (1 - p0) * results["sigma"]) ** 2
+    var_noise = (p0 * (1 - p0) * (results["sigma"] if sigma is None else sigma)) ** 2
     skew = (1 - 2 * p0) / np.sqrt(n * p0 * (1 - p0)) * (var_bin / (var_bin + var_noise)) ** 1.5
     return norm.sf(threshold) + norm.pdf(threshold) * skew * (threshold ** 2 - 1) / 6
+
+
+def short_noise_sigma(res, config):
+    """Per row of a short-noise scenario: sigma_u of A (rho = r of the window) or of a size window [40, c] (rho_c),
+    from breakeven_check's definitions; NaN for the weighted methods (their expected FPR is NaN anyway)."""
+    matrices = origin_matrices(config)
+    w_lo, w_hi = short_noise(config)["window_bp"]
+    lo = config["methods"]["size_selection_window_bp"][0]
+    out = []
+    for row in res.itertuples():
+        sigma_s, _ = short_noise_params(config, row.noise, matrices["lengths"])
+        if row.method == "A":
+            rho = window_stats(matrices, row.ff, w_lo, w_hi)["r"]
+        elif np.isfinite(row.r):
+            hi_x = min(row.cutoff, w_hi)
+            inside = window_stats(matrices, row.ff, max(lo, w_lo), hi_x)["r"] if hi_x >= max(lo, w_lo) else 0.0
+            rho = inside / row.r
+        else:
+            out.append(np.nan)
+            continue
+        out.append(np.sqrt(row.sigma ** 2 + (sigma_s * rho) ** 2))
+    return np.array(out)
 
 
 def fpr_check(results, config):
@@ -56,7 +82,8 @@ def fpr_check(results, config):
     if not np.allclose(fp, fp.round(), rtol=0, atol=1e-6):
         raise ValueError("fpr * test_normal is not a whole number of patients for some rows")
     res["false_positives"] = fp.round().astype(int)
-    res["expected_fpr_skew"] = skew_expected_fpr(res, t)
+    sigma = short_noise_sigma(res, config) if short_noise(config) is not None else None   # Task 08 only
+    res["expected_fpr_skew"] = skew_expected_fpr(res, t, sigma)
 
     rows = []
     for level, by in LEVELS.items():

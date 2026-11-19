@@ -17,7 +17,7 @@ Run from the repo root to print the features on the training set of the mileston
 
 import numpy as np
 
-from src.config import load_config, scenario_name
+from src.config import fetal_profile_name, load_config
 from src.methods.reference import build_reference, statistics, zscores
 from src.simulate.patients import generate_group, origin_matrices
 
@@ -27,8 +27,8 @@ TREE_FEATURES = {"C1": ["zA"], "C2": ["zA", "z_short", "z_weighted"]}
 
 
 def feature_statistic(feature, config):
-    """Statistic behind a feature: FEATURES, except z_weighted -> weighted_g1 in a robustness scenario."""
-    if feature == "z_weighted" and scenario_name(config) is not None:
+    """Statistic behind a feature: FEATURES, except z_weighted -> weighted_g1 in a fetal-profile scenario."""
+    if feature == "z_weighted" and fetal_profile_name(config) is not None:
         return "weighted_g1"
     return FEATURES[feature]
 
