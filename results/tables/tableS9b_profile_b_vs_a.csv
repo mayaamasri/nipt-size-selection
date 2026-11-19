@@ -1,0 +1,7 @@
+profile,n_B_below_A,n_B_minus_A_sig_negative,n_Bopt_below_A,max_Bopt_sens_loss_pts
+G1,0,0,0,-0.825
+shift_m10,0,0,0,0
+shift_m5,0,0,0,0
+shift_p5,61,10,59,-11.975
+shift_p10,88,44,88,-32.1
+blend50,88,45,88,-25.175
