@@ -15,7 +15,8 @@ from src.evaluate.figures.fig2_inputs import FIG_FF as FIG2_FF, UPPER, exact_g_r
 from src.evaluate.figures.fig4_breakeven import CUTOFFS as FIG4_CUTOFFS, nstar_label
 from src.evaluate.figures.figS_short_noise import observed
 from src.evaluate.robustness_snoise import MAIN as SNOISE_MAIN, profiles as snoise_profiles
-from src.simulate.patients import origin_matrices
+from src.evaluate.breakeven_check import predicted_ratio
+from src.simulate.patients import origin_matrices, window_stats
 
 OUT = "docs/revision_numbers.md"
 TREES = ("C1", "C2")
@@ -209,6 +210,20 @@ def short_noise(s, config):
         s.line(f"FF {100 * r.ff:g}%: k* (closed form; numerical), 1/√r, k for 1.05 at 5M, k for 1.13 at 8.8M",
                f"{r.k_star:.3f}; {r.k_star_numeric:.3f}, {r.inv_sqrt_r:.3f}, {r.k_for_105_at_5M:.2f}, {r.k_for_113_at_8_8M:.2f}",
                f"results/tables/snoise_budis_illustration.csv: ff {r.ff}")
+    # Minárik et al. illustration (Discussion, model only): gain of the 40–156 bp window in their setting
+    # (trisomic median FF 13.19% / 13.86%, about 2.1M filtered reads), realistic noise, Eq. 5 with exact g and r
+    mats = origin_matrices(config)
+    p0 = float(mats["maternal"][0].sum())  # q(chr21), row 0 = chr21
+    sigma = config["grid"]["noise_sigma_values"][config["grid"]["noise_sigma"].index("realistic")]
+    gains = {}
+    for ff in (0.135, 0.1319, 0.1386):
+        w = window_stats(mats, ff, 40, 156)
+        gains[ff] = (w["gain"], w["r"], predicted_ratio(w["gain"], w["r"], p0, 2.1e6, sigma))
+    g, r, ratio = gains[0.135]
+    s.line("Minárik illustration: model gain sep(B)/sep(A) of 40–156 bp at FF 13.5%, 2.1M, realistic noise",
+           f"{ratio:.3f} (g = {g:.3f}, r = {r:.3f}; {gains[0.1386][2]:.3f}–{gains[0.1319][2]:.3f} for FF 13.86–13.19%)",
+           "length/mappability model (src.simulate.patients.window_stats) and Eq. 5 "
+           "(src.evaluate.breakeven_check.predicted_ratio), p0 = q(chr21)")
     reg = read("snoise_regimes.csv")
     rsrc = "results/tables/snoise_regimes.csv"
     for k, g in reg.groupby("k"):
