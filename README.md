@@ -38,7 +38,7 @@ src/evaluate/figures/  one script per manuscript figure
 data/                  NOT in git (large); recreate with scripts/download_reference.sh and run_all.sh
 results/figures,tables final outputs used in the manuscript
 results/robustness/    per-scenario tables of the robustness analyses (Task 07 fetal profiles, Task 08 short-fragment noise)
-results/refined_grid/  extra FF conditions: the 14-point detection-limit grid (Task 09, decision #19)
+results/refined_grid/  extra FF conditions: the 14-point detection-limit grid (Task 09, decision #20)
 ```
 
 ## Setup
@@ -100,7 +100,7 @@ change are the `run_log.csv` files (commit, time and dirty flag of each run) and
 
 **Two FF grids.** The simulated grid has 8 FFs (1, 2, 3, 4, 6, 8, 10, 15%): per-condition results, Figs. 3–5 and
 all robustness-scenario limits use it. Every main-grid detection limit in the paper (Table 2, Tables S4, S6–S8)
-uses a 14-point grid that adds 1.5, 2.5, 3.5, 5, 7 and 9% (decision #19; `results/refined_grid`). The pool step was checked on one chunk: chunk 0 (1M fragments), regenerated and
+uses a 14-point grid that adds 1.5, 2.5, 3.5, 5, 7 and 9% (decision #20; `results/refined_grid`). The pool step was checked on one chunk: chunk 0 (1M fragments), regenerated and
 remapped from scratch in a separate folder, matched the committed run's chunk exactly (137 s).
 
 To check that one condition reproduces its saved rows exactly (a few seconds):
@@ -161,7 +161,7 @@ its CIs are lumpy (the limit jumps when the number of resampled normals in the t
 A tree pair is therefore never called clear from the `sens` basis alone. A difference gets a CI only if both
 limits are numeric in at least 95% of resamples. Seeds: family 5 (test and reference streams per setting).
 
-**14-point limit grid (decision #19).** The main grid's detection limits in the paper (Table 2, Tables S4 and
+**14-point limit grid (decision #20).** The main grid's detection limits in the paper (Table 2, Tables S4 and
 S6–S8) use a 14-point FF grid: the 8 grid FFs plus
 `evaluation.limit_extra_ff` (1.5, 2.5, 3.5, 5, 7, 9%), each simulated at every depth × noise setting
 (`python -m src.evaluate.refined_grid --all-settings`, 72 conditions in `results/refined_grid`, seeds family 7).
