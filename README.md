@@ -43,7 +43,6 @@ data/                  NOT in git (large); recreate with scripts/download_refere
 results/figures,tables final outputs used in the manuscript
 results/robustness/    per-scenario tables of the robustness analyses (Task 07 fetal profiles, Task 08 short-fragment noise)
 results/refined_grid/  extra FF conditions: the 14-point detection-limit grid (Task 09, decision #19)
-manuscript/            manuscript source
 ```
 
 ## Setup
@@ -217,7 +216,7 @@ and recomputes those limits on the refined grid.
 | Table S10 (parts a–c): `tables/tableS10a_snoise_rise.csv` … `tableS10c_snoise_regimes.csv` | `src/evaluate/tables.py` | short-fragment noise and the four regimes (8-point grid) |
 | `tables/snoise_regimes.csv` | `src/evaluate/snoise_regimes.py` | regime (i)–(iv) per cutoff × FF × k from g, r and the two-σ model (model only) |
 | `tables/latex/*.tex` | `src/evaluate/latex_tables.py` | every table above as LaTeX (booktabs; `table1_realism_yang.tex` and `table2_detection_limits.tex` are the bare tabular, caption in main.tex; `tableS1_…` to `tableS10_…` with their captions, S9 and S10 one table each; reader labels such as W (FF 10%) and +10 bp; needs booktabs, longtable, amsmath) |
-| `supplement/additional_file_1.tex` | `src/evaluate/additional_file.py` | Additional file 1: Supplementary Note S1 (empty, written in the manuscript), Figs. S1–S5 with captions, Tables S1–S10. Compile with `cd supplement && tectonic additional_file_1.tex` (any LaTeX with amsmath, booktabs, longtable, graphicx works); the PDF is not committed |
+| `supplement/additional_file_1.tex` | `src/evaluate/additional_file.py` | Additional file 1: Supplementary Note S1 (empty, written in the manuscript), Figs. S1–S5 with captions, Tables S1–S10. Compile with `cd supplement && tectonic additional_file_1.tex` (any LaTeX with amsmath, booktabs, longtable, graphicx works); the submitted version, with Supplementary Note S1 filled in, is `supplement/Additional_file_1_submitted.pdf` |
 | `docs/revision_numbers.md` | `src/evaluate/revision_numbers.py` | every number quoted in the revised text, with its source file |
 | `tables/mappability.csv`, `survival_by_origin.csv` | `src/simulate/mappability.py`, `survival_by_origin.py` | S(l), q(c), survival by origin |
 | `tables/patients_qc.csv`, `noise_qc.csv` | `src/simulate/patients.py`, `noise_qc.py` | patient and noise QC |
