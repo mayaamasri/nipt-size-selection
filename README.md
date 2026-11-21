@@ -1,11 +1,7 @@
 # When does fragment size selection help NIPT detection of trisomy 21?
 
 CMPS 355 (Bioinformatics Algorithms), AUB, Fall 2026 - Hala Fatfat, Maya El Masri
-
-A simulation study of when hard fragment-size selection improves non-invasive
-prenatal detection of trisomy 21, across fetal fraction (FF), sequencing depth
-and noise, and whether a classifier combining counts and fragment lengths
-outperforms size selection.
+A simulation study of when hard fragment-size selection improves non-invasive prenatal detection of trisomy 21, across fetal fraction (FF), sequencing depth and noise, and whether keeping all fragments and weighting them by length works better.
 
 ## What the study does
 
